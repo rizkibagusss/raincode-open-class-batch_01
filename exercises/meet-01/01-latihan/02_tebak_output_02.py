@@ -10,17 +10,17 @@
 a = 10
 b = 3
 
-print(a + b)    # tebak: ???   → penjumlahan
-print(a - b)    # tebak: ???   → pengurangan
-print(a * b)    # tebak: ???   → perkalian
-print(a / b)    # tebak: ???   → pembagian biasa
-print(a // b)   # tebak: ???   → pembagian bulat (buang koma)
-print(a % b)    # tebak: ???   → sisa bagi (modulo)
-print(a ** b)   # tebak: ???   → pangkat
+print(a + b)    # tebak: 13       → penjumlahan
+print(a - b)    # tebak: 7        → pengurangan
+print(a * b)    # tebak: 30       → perkalian
+print(a / b)    # tebak: 3.3333   → pembagian biasa
+print(a // b)   # tebak: 3        → pembagian bulat (buang koma)
+print(a % b)    # tebak: 1        → sisa bagi (modulo)
+print(a ** b)   # tebak: 1000     → pangkat
 
 # Pertanyaan setelah jalankan:
-# - Kenapa a / b hasilnya beda dengan a // b?
-# - Apa kegunaan operator % di kehidupan nyata?
+# - Kenapa a / b hasilnya beda dengan a // b? Karena a / b menghasilkan bilangan float, kalau a // b menghasilkan bilangan bulat
+# - Apa kegunaan operator % di kehidupan nyata? Untuk mengetahui angka itu ganjil atau genap
 #   (Hint: cek apakah angka genap atau ganjil)
 
 
@@ -33,7 +33,7 @@ x = 7
 y = 2
 
 # Berapa hasilnya?
-# x + y * 3        → ???   (ingat urutan operasi!)
-# (x + y) * 3      → ???
-# x % y            → ???
-# x ** 2 + y       → ???
+# x + y * 3        → 13   (ingat urutan operasi!)
+# (x + y) * 3      → 27
+# x % y            → 1
+# x ** 2 + y       → 51
