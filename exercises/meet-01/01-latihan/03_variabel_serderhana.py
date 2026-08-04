@@ -15,6 +15,11 @@
 #   Saya tinggal di Bandung
 
 # Tulis kode kamu di sini:
+nama = "Bagus"
+umur = 25
+kota = "Jakarta"
+
+print(f"Halo, nama saya {nama}\nUmur saya {umur} tahun\nSaya tinggal di {kota}")
 
 
 # ============================================================
@@ -39,3 +44,12 @@
 # ============================================================
 # Tambahkan variabel hobi, lalu cetak juga:
 # "Hobi saya <hobi>"
+
+print("================================================================")
+
+nama = "Sari"
+kota = "Surabaya"
+hobi = "Berenang"
+print("Halo, nama saya", nama)
+print("Saya tinggal di", kota)
+print("Hobi saya adalah", hobi)
