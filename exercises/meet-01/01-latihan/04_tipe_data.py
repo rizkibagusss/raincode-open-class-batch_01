@@ -7,19 +7,21 @@
 # Sebelum dijalankan, tebak tipe data apa yang akan muncul.
 # Pilihan: <class 'int'>, <class 'float'>, <class 'str'>, <class 'bool'>
 
+print("========= BAGIAN 1 - TEBAK TIPE DATANYA ==========")
+
 nama      = "Sari"
 umur      = 21
 tinggi    = 160.5
 mahasiswa = True
 
-print(type(nama))        # tebak: ???
-print(type(umur))        # tebak: ???
-print(type(tinggi))      # tebak: ???
-print(type(mahasiswa))   # tebak: ???
+print(type(nama))        # tebak: STRING
+print(type(umur))        # tebak: INTEGER
+print(type(tinggi))      # tebak: FLOAT
+print(type(mahasiswa))   # tebak: BOOLEAN
 
 # Pertanyaan:
-# - Kenapa 160.5 bukan int?
-# - Kenapa "21" berbeda dengan 21 di Python?
+# - Kenapa 160.5 bukan int? KARENA MENGANDUNG KOMA DIBELAKANG ANGKA 0
+# - Kenapa "21" berbeda dengan 21 di Python? KARENA "21" DIANGGAP STRING KARENA ADA TANDA "", SEMENTARA 21 ITU MURNI INTEGER
 
 
 # ============================================================
@@ -28,22 +30,24 @@ print(type(mahasiswa))   # tebak: ???
 # Tebak tipe data dari variabel-variabel ini.
 # Hati-hati, beberapa tidak sesederhana kelihatannya.
 
-a = "100"       # tebak: ???
-b = 100         # tebak: ???
-c = 100.0       # tebak: ???
-d = True        # tebak: ???
-e = "True"      # tebak: ???
-f = 3 + 2       # tebak: ???
-g = 3 + 2.0     # tebak: ???
+print("========= BAGIAN 2 - JEBAKAN TIPE DATA ==========")
+
+a = "100"       # tebak: STRING
+b = 100         # tebak: INTEGER
+c = 100.0       # tebak: FLOAT
+d = True        # tebak: BOOLEAN
+e = "True"      # tebak: STRING
+f = 3 + 2       # tebak: INTEGER
+g = 3 + 2.0     # tebak: FLOAT
 
 print(type(a), type(b), type(c))
 print(type(d), type(e))
 print(type(f), type(g))
 
 # Pertanyaan:
-# - Apakah a dan b bisa dijumlahkan langsung? Kenapa?
-# - Apa perbedaan d dan e?
-# - Kenapa g berbeda dengan f padahal angkanya hampir sama?
+# - Apakah a dan b bisa dijumlahkan langsung? Kenapa? TIDAK BISA, KARENA HARUS SAMA TYPE DATANYA
+# - Apa perbedaan d dan e? D ITU BOOLEAN, E ITU STRING
+# - Kenapa g berbeda dengan f padahal angkanya hampir sama? KARENA G INTEGER + FLOAT, SEHINGGA HASIL AKHIR FLOAT. KALAU F ITU MURNI INTEGER + INTEGER
 
 
 # ============================================================
@@ -52,16 +56,19 @@ print(type(f), type(g))
 # Ganti None dengan nilai yang sesuai tipe datanya.
 # Jangan pakai tipe data yang salah!
 
+print("========= BAGIAN 3 - ISI YANG BENAR ==========")
+
+
 # Butuh integer (angka tahun):
-tahun_lahir = None   # ganti dengan angka tahun lahirmu
+tahun_lahir = 2000   # ganti dengan angka tahun lahirmu
 
 # Butuh float (nilai IPK):
-ipk = None           # ganti dengan angka desimal, contoh: 3.75
+ipk = 3.65           # ganti dengan angka desimal, contoh: 3.75
 
 # Butuh string (nama kota):
-kota = None          # ganti dengan nama kotamu dalam tanda kutip
+kota = "Jakarta"         # ganti dengan nama kotamu dalam tanda kutip
 
 # Butuh boolean (apakah sudah makan siang?):
-sudah_makan = None   # ganti dengan True atau False
+sudah_makan = True   # ganti dengan True atau False
 
 print(tahun_lahir, ipk, kota, sudah_makan)
