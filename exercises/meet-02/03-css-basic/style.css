@@ -29,6 +29,9 @@
          color: green;
      }
 */
+.teks-hijau {
+   color: green;
+}
 
 
 /* TODO 2: Perbesar ukuran huruf .teks-besar jadi 24px
@@ -37,6 +40,10 @@
          font-size: 24px;
      }
 */
+
+.teks-besar{
+   font-size: 24px;
+}
 
 
 /* ============================================================
@@ -52,11 +59,13 @@
 .kotak-padding {
     background: #FCFAF5;
     border: 1px solid #0D9488;
+    padding: 24px;
 }
 
 .kotak-margin {
     background: #F3FAF8;
     border: 1px solid #0D9488;
+    margin: 16px;
 }
 
 /* TODO 3: Tambahkan padding: 24px; ke .kotak-padding
@@ -89,6 +98,16 @@
      }
 */
 
+.kartu {
+
+   background-color: white;
+   padding: 20px;
+   border-radius: 12px;
+   width: 320px;
+
+}
+
+
 
 /* ============================================================
    BONUS (opsional)
@@ -96,3 +115,8 @@
    Beri body warna latar #F3FAF8 dan font-family: Arial;
    supaya seluruh halaman terasa lebih rapi.
 */
+
+body {
+   background-color: #F3FAF8;
+   font-family: Arial, Helvetica, sans-serif;
+}
