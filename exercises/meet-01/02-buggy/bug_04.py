@@ -12,14 +12,14 @@
 
 nilai = 85
 
-if nilai >= 60:
-    grade = "D"
-elif nilai >= 70:
-    grade = "C"
+if nilai >= 90:
+    grade = "A"
 elif nilai >= 80:
     grade = "B"
-elif nilai >= 90:
-    grade = "A"
+elif nilai >= 70:
+    grade = "C"
+elif nilai >= 60:
+    grade = "D"
 else:
     grade = "E"
 
@@ -28,5 +28,5 @@ print("Grade:", grade)
 # ---- Petunjuk ----
 # Python mengevaluasi kondisi if/elif dari atas ke bawah.
 # Begitu satu kondisi True, yang lain dilewati.
-# Coba tanya diri sendiri: nilai 85 >= 60 itu True atau False?
-# Terus apa yang terjadi setelah kondisi pertama True?
+# Coba tanya diri sendiri: nilai 85 >= 60 itu True atau False? HARUSNYA TRUE
+# Terus apa yang terjadi setelah kondisi pertama True? DIA PRINT GRADE D KARENA MEMANG DI PYTHON KALAU BARIS PERTAMA SUDAH MEMENUHI MAKA ITU HASILNYA
