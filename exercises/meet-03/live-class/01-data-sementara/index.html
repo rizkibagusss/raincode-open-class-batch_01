@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Data Sementara — Meet 03</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="intro">
+        <p class="eyebrow">RAINCODE · MEET 03</p>
+        <h1>Data hidup realtime,<br /><span>tetapi belum permanent.</span></h1>
+        <p>
+          Form ini memasukkan object ke array JavaScript, lalu merender table.
+          Coba refresh setelah menambah data.
+        </p>
+        <div class="memory-pill"><span></span> Penyimpanan: browser memory</div>
+      </section>
+
+      <section class="workspace">
+        <form id="transaction-form" class="card">
+          <div class="card-title">
+            <div>
+              <small>INPUT</small>
+              <h2>Tambah belanja</h2>
+            </div>
+            <strong>01</strong>
+          </div>
+          <label
+              >Nama transaksi
+            <input
+              id="nama"
+              name="nama"
+              placeholder="Contoh: Kopi Susu"
+              maxlength="100"
+              required
+            />
+          </label>
+          <label
+              >Total
+            <input
+              id="total"
+              name="total"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="25000"
+              required
+            />
+          </label>
+          <button type="submit">Tambahkan ke array <span>→</span></button>
+          <p id="form-message" class="message" role="status"></p>
+        </form>
+
+        <section class="card table-card">
+          <div class="card-title">
+            <div>
+              <small>OUTPUT</small>
+              <h2>Table realtime</h2>
+            </div>
+            <strong id="count">0</strong>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nama</th>
+                  <th>Total</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="transaction-rows"></tbody>
+            </table>
+            <div id="empty-state" class="empty">
+              Belum ada object di dalam array.
+            </div>
+          </div>
+          <div class="array-preview">
+            <small>ISI ARRAY JAVASCRIPT</small>
+            <pre id="array-output">[]</pre>
+          </div>
+        </section>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>

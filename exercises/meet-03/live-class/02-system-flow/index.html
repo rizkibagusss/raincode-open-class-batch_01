@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Perjalanan Data — Meet 03</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <div>
+        <p>RAINCODE SYSTEM MAP</p>
+        <h1>Ikuti satu data,<br /><span>sampai kembali ke layar.</span></h1>
+      </div>
+      <div class="payload">
+        <small>PAYLOAD HARI INI</small
+        ><code>{ nama: "Kopi Susu", total: 25000 }</code>
+      </div>
+    </header>
+
+    <main>
+      <section class="map" aria-label="Diagram perjalanan data">
+        <article class="node frontend" data-step="1">
+          <span class="number">01</span><small>FRONTEND · MEET 02</small>
+          <h2>Website</h2>
+          <p>
+            HTML membentuk form, CSS memberi visual, JavaScript menangani
+            interaksi.
+          </p>
+          <div class="chips">
+            <span>HTML</span><span>CSS</span><span>JavaScript</span>
+          </div>
+        </article>
+        <div class="bridge" data-step="2">
+          <b>HTTP REQUEST</b><span>POST /transactions →</span>
+        </div>
+        <article class="node backend" data-step="3">
+          <span class="number">02</span><small>BACKEND · MEET 01 + 03</small>
+          <h2>Python + Flask</h2>
+          <p>
+            Menerima input, memvalidasi, menjalankan aturan, dan memilih
+            operation.
+          </p>
+          <div class="chips">
+            <span>route</span><span>validation</span><span>service</span>
+          </div>
+        </article>
+        <div class="bridge" data-step="4">
+          <b>CONNECTOR + SQL</b><span>INSERT ... %s →</span>
+        </div>
+        <article class="node database" data-step="5">
+          <span class="number">03</span><small>DATABASE · MEET 03</small>
+          <h2>MySQL</h2>
+          <p>Menyimpan row secara permanen dan mengembalikan hasil query.</p>
+          <div class="chips">
+            <span>database</span><span>table</span><span>row</span>
+          </div>
+        </article>
+        <div class="return bridge" data-step="6">
+          <b>QUERY RESULT</b><span>← dictionary row</span>
+        </div>
+        <article class="node output" data-step="7">
+          <span class="number">04</span><small>OUTPUT · KEMBALI KE USER</small>
+          <h2>Table terisi</h2>
+          <p>
+            Backend merender HTML atau mengirim JSON; browser memperbarui
+            tampilan.
+          </p>
+          <div class="mini-row">
+            <i>1</i><strong>Kopi Susu</strong><em>Rp25.000</em>
+          </div>
+        </article>
+      </section>
+
+      <section class="control-panel">
+        <div>
+          <small id="step-label">SIAP MULAI</small>
+          <h3 id="step-title">Data tidak teleport.</h3>
+          <p id="step-description">
+            Klik tombol untuk melihat siapa melakukan apa pada setiap langkah.
+          </p>
+        </div>
+        <div class="controls">
+          <button id="reset" class="ghost">Reset</button
+          ><button id="next">Mulai perjalanan data <span>→</span></button>
+        </div>
+      </section>
+
+      <section class="legend">
+        <article>
+          <b>Frontend ↔ Backend</b>
+          <p>Berkomunikasi melalui HTTP request dan response.</p>
+        </article>
+        <article class="focus">
+          <b>Backend ↔ Database</b>
+          <p>Berkomunikasi melalui driver/connector dan query SQL.</p>
+        </article>
+        <article>
+          <b>Database ↔ Output</b>
+          <p>Result menjadi dictionary, HTML/JSON, lalu tampilan.</p>
+        </article>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>

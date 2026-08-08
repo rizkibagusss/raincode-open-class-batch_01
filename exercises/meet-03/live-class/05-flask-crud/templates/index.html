@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Permanent Data Lab</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<main>
+  <header><p>RAINCODE · MYSQL CRUD LAB</p><h1>Data yang kembali<br><span>setelah refresh.</span></h1><div id="status">Menghubungkan ke backend…</div></header>
+  <section class="grid">
+    <form id="form" class="card">
+      <div class="title"><div><small id="form-mode">CREATE · POST</small><h2 id="form-title">Transaksi baru</h2></div><b>API</b></div>
+      <input type="hidden" id="transaction-id">
+      <label>Nama transaksi<input id="nama" maxlength="100" required placeholder="Kopi Susu"></label>
+      <label>Total<input id="total" type="number" min="0" step="0.01" required placeholder="25000"></label>
+      <button>Simpan ke MySQL <span>→</span></button><button type="button" id="cancel" class="secondary" hidden>Batal edit</button>
+      <p id="message"></p>
+    </form>
+    <section class="card table-card">
+      <div class="title"><div><small>READ · GET</small><h2>transactions</h2></div><b id="count">0 ROW</b></div>
+      <div class="table-wrap"><table><thead><tr><th>ID</th><th>Nama</th><th>Total</th><th>Action</th></tr></thead><tbody id="rows"></tbody></table><div id="empty">Belum ada row di MySQL.</div></div>
+    </section>
+  </section>
+</main>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body></html>

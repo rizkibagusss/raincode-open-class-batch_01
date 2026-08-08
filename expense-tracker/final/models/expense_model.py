@@ -14,7 +14,7 @@ WHAT IS A MODEL?
     ┌─────────────────────────┐         ┌──────────────────────────┐
     │ id       INTEGER        │   →     │ expense.id   : int       │
     │ title    TEXT           │   →     │ expense.title: str       │
-    │ amount   REAL           │   →     │ expense.amount: float    │
+    │ amount   DECIMAL(15,2)  │   →     │ expense.amount: Decimal  │
     │ category TEXT           │   →     │ expense.category: str    │
     │ notes    TEXT           │   →     │ expense.notes: str       │
     │ created_at TEXT         │   →     │ expense.created_at: str  │
@@ -34,6 +34,7 @@ INDUSTRY NOTE:
 """
 
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import Optional
 
 
@@ -83,7 +84,7 @@ class Expense:
 
     id: Optional[int] = None
     title: str = ""
-    amount: float = 0.0
+    amount: Decimal = Decimal("0.00")
     category: str = "Other"
     notes: str = ""
     created_at: Optional[str] = None
@@ -116,7 +117,7 @@ class Expense:
         Create an Expense object from a dictionary.
 
         Used when we receive data from the database.
-        (SQLite returns rows as dicts, not Expense objects)
+        (The MySQL dictionary cursor returns dicts, not Expense objects)
 
         Args:
             data: Dictionary with expense fields
@@ -127,7 +128,7 @@ class Expense:
         return cls(
             id=data.get("id"),
             title=data.get("title", ""),
-            amount=float(data.get("amount", 0.0)),
+            amount=Decimal(str(data.get("amount", "0.00"))),
             category=data.get("category", "Other"),
             notes=data.get("notes", ""),
             created_at=data.get("created_at"),

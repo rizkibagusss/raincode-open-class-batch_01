@@ -28,7 +28,7 @@ LOG LEVELS (from least severe to most severe):
 REAL-WORLD LOG EXAMPLES:
     INFO  | Expense created successfully | expense_id=15 category=Food amount=25000
     WARN  | Invalid amount entered | amount=-500 | user_ip=192.168.1.1
-    ERROR | Database connection failed | path=database/expense_tracker.db
+    ERROR | Database connection failed | host=127.0.0.1 database=expense_tracker
     INFO  | Application started | env=production | version=1.0.0
 
 HOW TO USE THIS IN OTHER FILES:

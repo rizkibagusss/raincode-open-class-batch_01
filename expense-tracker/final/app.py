@@ -36,7 +36,7 @@ THE FULL REQUEST FLOW:
        ↓   calls
     ExpenseRepository
        ↓   runs SQL
-    SQLite Database
+    MySQL Database
        ↑   returns rows
     ExpenseRepository
        ↑   returns dict

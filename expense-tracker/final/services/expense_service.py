@@ -42,6 +42,7 @@ VALIDATION PHILOSOPHY:
     Server-side validation is your last line of defense.
 """
 
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Optional
 
 from models.expense_model import EXPENSE_CATEGORIES
@@ -53,8 +54,8 @@ logger = get_logger(__name__)
 # ── Business Rule Constants ────────────────────────────────────────────────────
 # Named constants instead of "magic numbers" scattered throughout the code.
 # If the max amount policy changes, you change it in ONE place.
-MIN_AMOUNT: float = 0.01
-MAX_AMOUNT: float = 999_999_999.99
+MIN_AMOUNT: Decimal = Decimal("0.01")
+MAX_AMOUNT: Decimal = Decimal("999999999.99")
 MAX_TITLE_LENGTH: int = 200
 MAX_NOTES_LENGTH: int = 1000
 
@@ -115,7 +116,7 @@ class ExpenseService:
 
         Raises:
             ValueError: If any validation rule fails (user error)
-            sqlite3.Error: If the database operation fails (system error)
+            mysql.connector.Error: If the database operation fails (system error)
         """
         cleaned = self._validate_and_clean(form_data)
 
@@ -198,7 +199,7 @@ class ExpenseService:
         Calculate overall spending statistics for the dashboard.
 
         Returns a dict with:
-        - total_amount:     Raw float (e.g. 250000.5)
+        - total_amount:     Raw Decimal (e.g. Decimal("250000.50"))
         - formatted_total:  Display string (e.g. "250,000.50")
         - expense_count:    Total number of records
         - average_amount:   Formatted average per expense
@@ -208,7 +209,7 @@ class ExpenseService:
         """
         total = self.repository.get_total_amount()
         count = self.repository.get_expense_count()
-        average = total / count if count > 0 else 0.0
+        average = total / count if count > 0 else Decimal("0.00")
 
         return {
             "total_amount": total,
@@ -234,7 +235,11 @@ class ExpenseService:
         result = []
         for row in category_data:
             amount = row["total_amount"]
-            percentage = (amount / grand_total * 100) if grand_total > 0 else 0.0
+            percentage = (
+                amount / grand_total * Decimal("100")
+                if grand_total > 0
+                else Decimal("0.0")
+            )
 
             result.append({
                 "category":        row["category"],
@@ -346,9 +351,12 @@ class ExpenseService:
             raise ValueError("Amount is required.")
 
         try:
-            amount = float(amount_s)
-        except ValueError:
+            amount = Decimal(amount_s)
+        except InvalidOperation:
             raise ValueError("Amount must be a valid number (e.g. 25000 or 25000.50).")
+
+        if not amount.is_finite():
+            raise ValueError("Amount must be a finite number.")
 
         if amount < MIN_AMOUNT:
             raise ValueError(f"Amount must be at least {self._format_currency(MIN_AMOUNT)}.")
@@ -372,7 +380,7 @@ class ExpenseService:
 
         return {
             "title":    title,
-            "amount":   round(amount, 2),   # Always store with 2 decimal places
+            "amount":   amount.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
             "category": category,
             "notes":    notes,
         }
@@ -402,9 +410,9 @@ class ExpenseService:
             "short_notes": self._truncate(expense.get("notes", ""), max_length=60),
         }
 
-    def _format_currency(self, amount: float) -> str:
+    def _format_currency(self, amount: Decimal) -> str:
         """
-        Format a float as a currency string with thousand separators.
+        Format a Decimal as a currency string with thousand separators.
 
         Examples:
             25000    → "25,000.00"

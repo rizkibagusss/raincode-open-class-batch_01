@@ -1,71 +1,127 @@
-"""
-database/db.py - Database Connection & Initialization
-======================================================
+"""Helper database sederhana untuk versi starter.
 
-INI BAGIAN YANG HARUS KAMU BANGUN.
+Service cukup mengimpor satu object:
 
-Fungsi file ini SAMA seperti yang sudah kamu buat di
-exercises/meet-03/06-create-table: membuka koneksi SQLite dan membuat
-tabel `expenses` kalau belum ada. Bedanya, di sini logikanya dipisah
-dari app.py supaya jadi satu-satunya tempat yang tahu cara membuka
-database.
+    from database.db import db
+    rows = db.execute("SELECT ...", params, fetch="all")
 
-Kalau bingung mulai dari mana, buka lagi:
-- exercises/meet-03/05-sqlite-basic (koneksi & query dasar)
-- exercises/meet-03/06-create-table (CREATE TABLE IF NOT EXISTS)
-- ../../final/database/db.py — HANYA setelah kamu mencoba sendiri
-
-SKEMA TABEL YANG DIHARAPKAN (dipakai oleh repository & template):
-    CREATE TABLE IF NOT EXISTS expenses (
-        id          INTEGER PRIMARY KEY AUTOINCREMENT,
-        title       TEXT    NOT NULL,
-        amount      REAL    NOT NULL,
-        category    TEXT    NOT NULL DEFAULT 'Other',
-        notes       TEXT             DEFAULT '',
-        created_at  TEXT    NOT NULL DEFAULT (datetime('now', 'localtime')),
-        updated_at  TEXT    NOT NULL DEFAULT (datetime('now', 'localtime'))
-    );
+Object `db` dipakai bersama, tetapi koneksi MySQL fisik dibuat per operasi agar
+tidak ada transaksi atau cursor yang tercampur antar-request Flask.
 """
 
-import os
-import sqlite3
+from typing import Any, Literal, Optional
+
+import mysql.connector
+from mysql.connector import Error
 
 from config import config
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-# TODO 1: Tulis SQL "CREATE TABLE IF NOT EXISTS expenses (...)" di sini,
-#         sesuai skema pada docstring di atas.
+FetchMode = Optional[Literal["one", "all"]]
+
 _CREATE_EXPENSES_TABLE = """
+CREATE TABLE IF NOT EXISTS expenses (
+    id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    title       VARCHAR(200)    NOT NULL,
+    amount      DECIMAL(15, 2)  NOT NULL,
+    category    VARCHAR(100)    NOT NULL DEFAULT 'Other',
+    notes       TEXT            NOT NULL,
+    created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP
+                                            ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    INDEX idx_expenses_created_at (created_at),
+    INDEX idx_expenses_category (category)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 """
 
 
-def get_connection() -> sqlite3.Connection:
-    """
-    Buka dan kembalikan koneksi SQLite baru.
+class Database:
+    """Menyediakan satu pintu untuk menjalankan seluruh query MySQL."""
 
-    PENTING: semua bagian aplikasi WAJIB lewat fungsi ini untuk
-    mengakses database — jangan panggil sqlite3.connect() di file lain.
+    def get_connection(self):
+        """Buka koneksi baru menggunakan konfigurasi dari `.env`."""
+        return mysql.connector.connect(
+            host=config.DB_HOST,
+            port=config.DB_PORT,
+            user=config.DB_USER,
+            password=config.DB_PASSWORD,
+            database=config.DB_NAME,
+            charset=config.DB_CHARSET,
+            time_zone=config.DB_TIME_ZONE,
+            connection_timeout=config.DB_CONNECT_TIMEOUT,
+            autocommit=False,
+        )
 
-    Langkah yang perlu kamu isi:
-        1. Pastikan folder tempat file database berada sudah ada
-           (config.DATABASE_PATH) — buat kalau belum ada.
-        2. Buka koneksi dengan sqlite3.connect(config.DATABASE_PATH).
-        3. Set connection.row_factory = sqlite3.Row supaya baris hasil
-           query bisa diakses seperti dictionary (row["title"]).
-        4. Kembalikan koneksi tersebut.
-    """
-    # TODO 2: implementasikan sesuai langkah di atas.
-    raise NotImplementedError("get_connection() belum diimplementasikan")
+    def execute(
+        self,
+        query: str,
+        params: tuple | list = (),
+        fetch: FetchMode = None,
+    ) -> Any:
+        """Jalankan satu query dan selalu bersihkan cursor serta koneksi.
+
+        Args:
+            query: SQL dengan placeholder MySQL `%s`.
+            params: Value untuk placeholder, terpisah dari string SQL.
+            fetch: `"one"` untuk satu dict, `"all"` untuk list[dict], atau
+                `None` untuk INSERT/UPDATE/DELETE/DDL.
+
+        Returns:
+            Untuk SELECT: dict, list[dict], atau None.
+            Untuk mutation: dict berisi `lastrowid` dan `rowcount`.
+        """
+        if fetch not in (None, "one", "all"):
+            raise ValueError("fetch harus None, 'one', atau 'all'")
+
+        connection = None
+        cursor = None
+
+        try:
+            connection = self.get_connection()
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(query, tuple(params))
+
+            if fetch == "one":
+                return cursor.fetchone()
+            if fetch == "all":
+                return cursor.fetchall()
+
+            result = {
+                "lastrowid": cursor.lastrowid,
+                "rowcount": cursor.rowcount,
+            }
+            connection.commit()
+            return result
+        except Error as exc:
+            if connection is not None:
+                connection.rollback()
+            logger.error("MySQL query failed | %s", exc)
+            raise
+        finally:
+            try:
+                if cursor is not None:
+                    cursor.close()
+            finally:
+                if connection is not None and connection.is_connected():
+                    connection.close()
+
+    def init_schema(self) -> None:
+        """Buat tabel yang dibutuhkan aplikasi jika belum tersedia."""
+        self.execute(_CREATE_EXPENSES_TABLE)
+        logger.info(
+            "Database initialized | host=%s | database=%s",
+            config.DB_HOST,
+            config.DB_NAME,
+        )
+
+
+# Satu object yang diimpor dan dipakai oleh semua Service.
+db = Database()
 
 
 def init_db() -> None:
-    """
-    Jalankan _CREATE_EXPENSES_TABLE lewat get_connection(), lalu commit.
-
-    Dipanggil SEKALI saat aplikasi start (lihat app.py). Karena SQL-nya
-    pakai "IF NOT EXISTS", aman dipanggil berkali-kali.
-    """
-    # TODO 3: buka koneksi, jalankan _CREATE_EXPENSES_TABLE, commit.
-    raise NotImplementedError("init_db() belum diimplementasikan")
+    """Compatibility function yang dipanggil saat app.py melakukan startup."""
+    db.init_schema()

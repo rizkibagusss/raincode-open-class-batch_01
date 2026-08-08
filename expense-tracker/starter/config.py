@@ -10,7 +10,7 @@ WHY THIS FILE EXISTS:
 INDUSTRY PRACTICE:
     Real companies NEVER hardcode configuration values in source code because:
     1. Security: Secrets (passwords, API keys) should never be in git
-    2. Flexibility: Dev uses SQLite, Production uses PostgreSQL
+    2. Flexibility: each environment can use a different MySQL server
     3. Portability: Different developers, different machines, same code
 
 HOW IT WORKS:
@@ -23,7 +23,11 @@ EXAMPLE .env:
     APP_NAME=RainCode Expense Tracker
     APP_ENV=development
     APP_DEBUG=True
-    DATABASE_PATH=database/expense_tracker.db
+    DB_HOST=127.0.0.1
+    DB_PORT=3306
+    DB_USER=expense_app
+    DB_PASSWORD=change-me
+    DB_NAME=expense_tracker
     LOG_LEVEL=INFO
 """
 
@@ -45,7 +49,7 @@ class Config:
     Usage:
         from config import config
         print(config.APP_NAME)
-        print(config.DATABASE_PATH)
+        print(config.DB_HOST)
     """
 
     # ── Application ────────────────────────────────────────────────────────────
@@ -62,9 +66,15 @@ class Config:
     )
 
     # ── Database ───────────────────────────────────────────────────────────────
-    # Path to the SQLite database file
-    # SQLite stores the entire database in a single file — great for learning!
-    DATABASE_PATH: str = os.getenv("DATABASE_PATH", "database/expense_tracker.db")
+    # MySQL connection settings. Keep credentials in .env, never in source code.
+    DB_HOST: str = os.getenv("DB_HOST", "127.0.0.1")
+    DB_PORT: int = int(os.getenv("DB_PORT", "3306"))
+    DB_USER: str = os.getenv("DB_USER", "expense_app")
+    DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")
+    DB_NAME: str = os.getenv("DB_NAME", "expense_tracker")
+    DB_CHARSET: str = os.getenv("DB_CHARSET", "utf8mb4")
+    DB_TIME_ZONE: str = os.getenv("DB_TIME_ZONE", "+07:00")
+    DB_CONNECT_TIMEOUT: int = int(os.getenv("DB_CONNECT_TIMEOUT", "10"))
 
     # ── Logging ────────────────────────────────────────────────────────────────
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
@@ -85,5 +95,5 @@ class Config:
 #
 # Usage across the project:
 #   from config import config
-#   path = config.DATABASE_PATH
+#   host = config.DB_HOST
 config = Config()

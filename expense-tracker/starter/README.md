@@ -1,14 +1,16 @@
 # RainCode Expense Tracker — Starter
 
 Ini bukan latihan folder-per-folder seperti `exercises/meet-03`.
-Ini kerangka **satu project utuh** — arsitektur, template, dan
-tampilan sudah disiapkan, tugasmu adalah menghidupkan bagian
-"otak"-nya: koneksi database, query SQL, validasi, dan route.
+Ini adalah versi sederhana yang langsung dapat dijalankan. Tujuannya agar kamu
+dapat melihat hubungan antara API, aturan bisnis, dan query SQL tanpa harus
+melewati Repository Pattern terlebih dahulu.
 
 Anggap ini ujian akhir informal: kalau kamu bisa menyelesaikan ini
-sendiri (boleh sambil buka kembali `exercises/meet-03`), itu tanda
-kamu benar-benar paham alurnya, bukan cuma pernah mengikuti
-langkah-langkahnya.
+Alurnya dibuat pendek dan eksplisit:
+
+```text
+Route (app.py) -> Service + Query SQL -> db.execute() -> MySQL
+```
 
 ## Apa yang Sudah Disiapkan
 
@@ -16,33 +18,48 @@ langkah-langkahnya.
 |---|---|
 | `templates/*.html` | Sudah lengkap — tampilan, form, tabel |
 | `static/css`, `static/js` | Sudah lengkap — styling & interaksi UI |
-| `config.py`, `utils/logger.py` | Sudah lengkap — konfigurasi & logging |
-| `models/expense_model.py` | Sudah lengkap — daftar kategori |
-| `database/db.py` | **Kosong, isi sendiri** — koneksi & buat tabel |
-| `repositories/expense_repository.py` | **Kosong, isi sendiri** — semua query SQL |
-| `services/expense_service.py` | **Kosong, isi sendiri** — validasi & business logic |
-| `app.py` | **Kosong, isi sendiri** — enam route |
+| `config.py`, `utils/logger.py` | Konfigurasi dan logging |
+| `models/expense_model.py` | Bentuk data dan daftar kategori |
+| `database/db.py` | Object `db` dengan satu method utama `db.execute()` |
+| `services/expense_service.py` | Business logic dan query SQL per use case/API |
+| `app.py` | Route Flask: dashboard, list, create, edit, delete, summary |
 
-Kenapa frontend & infrastruktur sudah jadi? Karena fokus latihan ini
-adalah alur **Route → Service → Repository → Database** — pola yang
-sama yang kamu pelajari di `exercises/meet-03` dan `exercises/meet-04`.
+Repository sengaja belum digunakan pada versi ini. Setelah memahami hubungan
+Route, Service, query, dan Database, buka versi `../final` untuk melihat query
+dipindahkan ke Repository Layer.
 
-## Urutan Mengerjakan
+## Cara Membaca Kode
 
-Ikuti urutan ini — tiap lapisan butuh lapisan di bawahnya sudah jalan:
+Ikuti satu fitur dari URL sampai query:
 
-1. **`database/db.py`** — buat koneksi jalan dan tabel `expenses` ada.
-2. **`repositories/expense_repository.py`** — satu per satu method,
-   test tiap method dengan memanggilnya lewat Python shell sebelum
-   lanjut ke method berikutnya.
-3. **`services/expense_service.py`** — validasi & format data.
-4. **`app.py`** — sambungkan semuanya lewat route, baru terlihat di
-   browser.
+1. Cari route, misalnya `POST /create`, di `app.py`.
+2. Lihat method Service yang dipanggil: `create_expense(form_data)`.
+3. Buka method tersebut di `services/expense_service.py`.
+4. Query `INSERT` berada tepat di dalam method itu.
+5. Query dijalankan melalui `db.execute(query, params)`.
+6. Buka `database/db.py` untuk melihat commit, rollback, dan cleanup koneksi.
 
-Tiap file punya komentar `TODO` yang menjelaskan apa yang perlu
-diisi — baca docstring-nya dulu sebelum menulis kode.
+Contoh pola yang digunakan:
+
+```python
+query = "SELECT * FROM expenses WHERE id = %s"
+expense = db.execute(query, (expense_id,), fetch="one")
+```
+
+Gunakan `fetch="one"` untuk satu row, `fetch="all"` untuk banyak row, dan tanpa
+`fetch` untuk `INSERT`, `UPDATE`, atau `DELETE`.
 
 ## Cara Menjalankan
+
+Pastikan MySQL Server berjalan. Buat database dan user terlebih dahulu:
+
+```sql
+CREATE DATABASE expense_tracker
+    CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'expense_app'@'localhost' IDENTIFIED BY 'change-this-local-password';
+GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, INDEX
+    ON expense_tracker.* TO 'expense_app'@'localhost';
+```
 
 ```bash
 cd projects/expense-tracker/starter
@@ -51,37 +68,29 @@ cp .env.example .env
 python app.py
 ```
 
-Buka `http://localhost:5000` — akan error sampai kamu mengisi
-lapisan-lapisan di atas. Itu wajar, error-nya adalah petunjukmu.
+Buka `http://localhost:5000`. Aplikasi akan langsung berjalan jika kredensial
+MySQL pada `.env` benar.
 
-## Kalau Benar-Benar Mentok
+## Latihan yang Disarankan
 
-Jangan langsung buka [../final](../final). Coba dulu:
-
-1. Baca lagi folder `exercises/meet-03` yang relevan dengan lapisan
-   yang sedang kamu kerjakan.
-2. Jalankan aplikasi dan baca pesan error-nya baris demi baris.
-3. Pakai prompt dari [ai-prompts/meet-03.md](../../../ai-prompts/meet-03.md)
-   untuk minta AI menuntunmu lewat pertanyaan, bukan jawaban langsung.
-
-Kalau sudah benar-benar mencoba dan masih stuck di satu bagian, baru
-buka bagian yang sepadan di `../final` — baca satu function itu saja,
-pahami, tutup lagi, lalu tulis ulang dengan pemahamanmu sendiri.
-Jangan copy-paste.
+1. Ubah query list agar hanya mengambil kategori tertentu.
+2. Tambahkan filter tanggal dengan parameterized query.
+3. Tambahkan satu kategori pada Model dan coba membuat expense.
+4. Buat query total pengeluaran per bulan.
+5. Bandingkan Service ini dengan Repository pada versi `../final`.
 
 ## Checklist
 
-- [ ] `database/db.py` — aplikasi bisa start tanpa error, file `.db` muncul otomatis.
-- [ ] `repositories/expense_repository.py` — semua method sudah diisi.
-- [ ] `services/expense_service.py` — validasi menolak input yang tidak valid dengan pesan jelas.
-- [ ] `app.py` — keenam route jalan: dashboard, list, create, edit, delete, summary.
-- [ ] Sudah dites lewat browser: tambah, cari, edit, hapus expense — semuanya tersimpan.
+- [ ] Bisa menjelaskan mengapa value SQL memakai placeholder `%s`.
+- [ ] Bisa menjelaskan perbedaan `fetch="one"`, `fetch="all"`, dan mutation.
+- [ ] Bisa menunjukkan query yang dipanggil oleh setiap route.
+- [ ] Bisa menjelaskan kapan commit dan rollback dijalankan.
+- [ ] Sudah mencoba tambah, cari, edit, dan hapus expense lewat browser.
 
 ## Hasil Akhir
 
-Expense Tracker versi kamu sendiri, dengan arsitektur rasa-industri
-(Route → Service → Repository), dibangun dari kerangka kosong tanpa
-panduan langkah-per-langkah — bukti kamu siap membangun project di
-luar kelas.
+Setelah versi sederhana ini dipahami, lanjut ke `../final` untuk mempelajari
+alur **Route → Service → Repository → Database** dan alasan query dipisahkan dari
+business logic pada aplikasi yang lebih besar.
 
 RainCode Open Class · Understand before memorizing.

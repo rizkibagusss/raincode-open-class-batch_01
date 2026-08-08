@@ -4,7 +4,6 @@
 # WHY THIS FILE EXISTS:
 #   Some files should NEVER be committed to git:
 #   - .env → contains secrets (passwords, API keys)
-#   - database/*.db → SQLite data files (each developer has their own)
 #   - __pycache__ → Python's compiled bytecode cache (auto-generated)
 #   - venv/envku/ → virtual environment (each developer installs their own)
 #   - logs/ → log files are generated at runtime, not code
@@ -16,11 +15,6 @@
 # ── Secrets & Config ──────────────────────────────────────────────────────────
 .env
 *.env.local
-
-# ── Database files ────────────────────────────────────────────────────────────
-database/*.db
-database/*.db-shm
-database/*.db-wal
 
 # ── Python Cache ──────────────────────────────────────────────────────────────
 __pycache__/

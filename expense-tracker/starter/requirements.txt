@@ -17,6 +17,9 @@
 #     Reads .env files and loads them into environment variables.
 #     Lets us use config values without hardcoding them.
 #
+#   mysql-connector-python==9.7.0
+#     Official MySQL driver used by db.execute() in the database layer.
+#
 # PIN YOUR VERSIONS:
 #   We use == to pin exact versions (flask==3.1.3 not flask).
 #   This ensures everyone gets the SAME version.
@@ -31,3 +34,4 @@
 
 flask==3.1.3
 python-dotenv==1.1.1
+mysql-connector-python==9.7.0

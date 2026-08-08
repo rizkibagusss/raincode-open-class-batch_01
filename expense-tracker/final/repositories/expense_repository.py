@@ -1,42 +1,16 @@
 """
-repositories/expense_repository.py - Data Access Layer
-========================================================
+repositories/expense_repository.py - MySQL Data Access Layer
+=============================================================
 
-WHY THIS FILE EXISTS:
-    This is the ONLY file in the project that writes raw SQL queries.
-    Every database operation for expenses is defined here.
-
-WHAT IS THE REPOSITORY PATTERN?
-    Think of this as the "librarian" of your data.
-
-    You tell the librarian: "Find me all Food expenses sorted by date."
-    The librarian knows exactly which shelf (table) to look at, how to search,
-    and brings back exactly what you asked for.
-    You don't need to know HOW the library is organized — you just make requests.
-
-    ┌──────────────┐     ┌──────────────────────┐     ┌──────────────┐
-    │  app.py      │ →   │  expense_service.py  │ →   │  expense_    │ → SQLite
-    │  (routes)    │     │  (business logic)    │     │  repository  │
-    └──────────────┘     └──────────────────────┘     └──────────────┘
-
-WHY SEPARATE FROM SERVICE?
-    Repository = "HOW to store/retrieve" (database operations only)
-    Service    = "WHETHER to store and WHAT rules apply" (business logic)
-
-    Benefit: If you switch from SQLite → PostgreSQL → MongoDB,
-    you ONLY update this file. The service and routes stay unchanged.
-
-SQL INJECTION PROTECTION:
-    ✅ SAFE:   cursor.execute("SELECT * FROM expenses WHERE id = ?", (expense_id,))
-    ❌ UNSAFE: cursor.execute(f"SELECT * FROM expenses WHERE id = {expense_id}")
-
-    The ? placeholder tells SQLite to treat the value as DATA, not SQL code.
-    An attacker who enters  1; DROP TABLE expenses; --  as an ID will just get
-    "no results found" — the malicious SQL never executes.
+All SQL for the expenses table lives here. Queries use MySQL Connector/Python
+parameter placeholders (%s); user values are never interpolated into SQL.
 """
 
-import sqlite3
-from typing import Optional
+from contextlib import contextmanager
+from decimal import Decimal
+from typing import Any, Iterator, Optional
+
+from mysql.connector import Error
 
 from database.db import get_connection
 from utils.logger import get_logger
@@ -44,69 +18,55 @@ from utils.logger import get_logger
 logger = get_logger(__name__)
 
 
+@contextmanager
+def _dictionary_cursor() -> Iterator[tuple[Any, Any]]:
+    """Yield a connection and dictionary cursor, then close both resources."""
+    connection = get_connection()
+    cursor = None
+    try:
+        cursor = connection.cursor(dictionary=True)
+        yield connection, cursor
+    finally:
+        try:
+            if cursor is not None:
+                cursor.close()
+        finally:
+            if connection.is_connected():
+                connection.close()
+
+
 class ExpenseRepository:
-    """
-    All database operations for the expenses table.
-
-    Each method performs exactly ONE database operation and returns
-    plain Python dictionaries (not custom objects).
-
-    Naming convention:
-        create_*   → INSERT
-        get_*      → SELECT
-        update_*   → UPDATE
-        delete_*   → DELETE
-    """
-
-    # ── CREATE ─────────────────────────────────────────────────────────────────
+    """All MySQL operations for the expenses table."""
 
     def create_expense(
         self,
         title: str,
-        amount: float,
+        amount: Decimal,
         category: str,
         notes: str,
     ) -> dict:
-        """
-        Insert a new expense row into the database.
-
-        The database automatically sets:
-        - id (AUTOINCREMENT)
-        - created_at (DEFAULT datetime('now', 'localtime'))
-        - updated_at (DEFAULT datetime('now', 'localtime'))
-
-        Args:
-            title:    Expense description
-            amount:   Cost amount
-            category: Expense category
-            notes:    Optional notes
-
-        Returns:
-            dict: The newly created expense including its auto-generated id
-
-        Raises:
-            sqlite3.Error: If the INSERT fails
-        """
         sql = """
             INSERT INTO expenses (title, amount, category, notes)
-            VALUES (?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s)
         """
+
         try:
-            with get_connection() as conn:
-                cursor = conn.execute(sql, (title, amount, category, notes))
-                conn.commit()
+            with _dictionary_cursor() as (connection, cursor):
+                try:
+                    cursor.execute(sql, (title, amount, category, notes))
+                    new_id = cursor.lastrowid
+                    connection.commit()
+                except Error:
+                    connection.rollback()
+                    raise
 
-                # lastrowid gives us the auto-generated id from AUTOINCREMENT
-                new_id = cursor.lastrowid
-
-            # Fetch and return the complete record (including timestamps)
-            return self.get_expense_by_id(new_id)
-
-        except sqlite3.Error as e:
-            logger.error(f"DB error creating expense | title={title} | {e}")
+            expense = self.get_expense_by_id(new_id)
+            if expense is None:
+                raise RuntimeError("Created expense could not be read back")
+            return expense
+        except Error as exc:
+            logger.error("DB error creating expense | title=%s | %s", title, exc)
             raise
-
-    # ── READ ───────────────────────────────────────────────────────────────────
 
     def get_expenses(
         self,
@@ -115,266 +75,155 @@ class ExpenseRepository:
         sort_by: str = "created_at",
         order: str = "desc",
     ) -> list[dict]:
-        """
-        Retrieve expenses with optional search, filter, and sorting.
-
-        Dynamic WHERE clause:
-            - If search is provided: filters title OR notes with LIKE
-            - If category is provided: exact match on category column
-            - Both can be combined
-
-        Args:
-            search:   Text to search in title and notes (partial match)
-            category: Exact category name to filter by
-            sort_by:  Column to sort by
-            order:    'asc' or 'desc'
-
-        Returns:
-            list[dict]: List of matching expenses as dictionaries
-        """
-        # ── Whitelist sort column to prevent SQL injection ──────────────────────
-        # We CANNOT use ? placeholders for column names, only for values.
-        # So we validate manually against a known-safe set of column names.
-        allowed_columns = {"id", "title", "amount", "category", "created_at", "updated_at"}
+        allowed_columns = {
+            "id", "title", "amount", "category", "created_at", "updated_at"
+        }
         if sort_by not in allowed_columns:
             sort_by = "created_at"
 
-        # Normalize order direction
         order_sql = "DESC" if order.strip().lower() == "desc" else "ASC"
-
-        # ── Build WHERE clause dynamically ─────────────────────────────────────
-        # We build conditions as a list, then join them with AND
-        # Parameters are collected separately to keep them OUT of the SQL string
         conditions: list[str] = []
-        params: list = []
+        params: list[Any] = []
 
         if search:
-            # LIKE with % wildcards → "coffee" matches "Morning Coffee", "Coffee Shop"
-            conditions.append("(title LIKE ? OR notes LIKE ?)")
+            conditions.append("(title LIKE %s OR notes LIKE %s)")
             params.extend([f"%{search}%", f"%{search}%"])
-
         if category:
-            conditions.append("category = ?")
+            conditions.append("category = %s")
             params.append(category)
 
         where_clause = ("WHERE " + " AND ".join(conditions)) if conditions else ""
-
         sql = f"""
             SELECT id, title, amount, category, notes, created_at, updated_at
-            FROM   expenses
+            FROM expenses
             {where_clause}
-            ORDER  BY {sort_by} {order_sql}
+            ORDER BY {sort_by} {order_sql}
         """
 
         try:
-            with get_connection() as conn:
-                cursor = conn.execute(sql, params)
-                rows = cursor.fetchall()
-                # Convert sqlite3.Row objects to plain dicts
-                return [dict(row) for row in rows]
-
-        except sqlite3.Error as e:
-            logger.error(f"DB error fetching expenses | search={search} | {e}")
+            with _dictionary_cursor() as (_, cursor):
+                cursor.execute(sql, tuple(params))
+                return cursor.fetchall()
+        except Error as exc:
+            logger.error("DB error fetching expenses | search=%s | %s", search, exc)
             raise
 
     def get_expense_by_id(self, expense_id: int) -> Optional[dict]:
-        """
-        Retrieve a single expense by its primary key.
-
-        Args:
-            expense_id: The unique ID of the expense
-
-        Returns:
-            dict: Expense data if found
-            None: If no expense with that ID exists
-        """
         sql = """
             SELECT id, title, amount, category, notes, created_at, updated_at
-            FROM   expenses
-            WHERE  id = ?
+            FROM expenses
+            WHERE id = %s
         """
-        try:
-            with get_connection() as conn:
-                cursor = conn.execute(sql, (expense_id,))
-                row = cursor.fetchone()
-                return dict(row) if row else None
 
-        except sqlite3.Error as e:
-            logger.error(f"DB error fetching expense | id={expense_id} | {e}")
+        try:
+            with _dictionary_cursor() as (_, cursor):
+                cursor.execute(sql, (expense_id,))
+                return cursor.fetchone()
+        except Error as exc:
+            logger.error("DB error fetching expense | id=%s | %s", expense_id, exc)
             raise
 
     def get_recent_expenses(self, limit: int = 5) -> list[dict]:
-        """
-        Retrieve the N most recently created expenses.
-
-        Used on the dashboard to show latest activity.
-
-        Args:
-            limit: Maximum number of expenses to return
-
-        Returns:
-            list[dict]: Most recent expenses, newest first
-        """
         sql = """
             SELECT id, title, amount, category, notes, created_at, updated_at
-            FROM   expenses
-            ORDER  BY created_at DESC
-            LIMIT  ?
+            FROM expenses
+            ORDER BY created_at DESC
+            LIMIT %s
         """
-        try:
-            with get_connection() as conn:
-                cursor = conn.execute(sql, (limit,))
-                rows = cursor.fetchall()
-                return [dict(row) for row in rows]
 
-        except sqlite3.Error as e:
-            logger.error(f"DB error fetching recent expenses: {e}")
+        try:
+            with _dictionary_cursor() as (_, cursor):
+                cursor.execute(sql, (int(limit),))
+                return cursor.fetchall()
+        except Error as exc:
+            logger.error("DB error fetching recent expenses: %s", exc)
             raise
 
     def get_category_totals(self) -> list[dict]:
-        """
-        Calculate total spending and count per category using SQL aggregation.
-
-        SQL Lesson — Aggregation functions:
-            SUM(amount)  → adds up all amounts in the group
-            COUNT(*)     → counts how many rows are in the group
-            GROUP BY     → creates one result row per unique category value
-            ORDER BY ... DESC → highest spending categories first
-
-        Returns:
-            list[dict]: Each dict has 'category', 'total_amount', 'expense_count'
-        """
         sql = """
             SELECT
                 category,
-                SUM(amount)  AS total_amount,
-                COUNT(*)     AS expense_count
-            FROM   expenses
-            GROUP  BY category
-            ORDER  BY total_amount DESC
+                SUM(amount) AS total_amount,
+                COUNT(*) AS expense_count
+            FROM expenses
+            GROUP BY category
+            ORDER BY total_amount DESC
         """
-        try:
-            with get_connection() as conn:
-                cursor = conn.execute(sql)
-                rows = cursor.fetchall()
-                return [dict(row) for row in rows]
 
-        except sqlite3.Error as e:
-            logger.error(f"DB error fetching category totals: {e}")
+        try:
+            with _dictionary_cursor() as (_, cursor):
+                cursor.execute(sql)
+                return cursor.fetchall()
+        except Error as exc:
+            logger.error("DB error fetching category totals: %s", exc)
             raise
 
-    def get_total_amount(self) -> float:
-        """
-        Calculate the grand total of all expenses.
-
-        COALESCE(SUM(amount), 0):
-            SUM of an empty table returns NULL in SQL.
-            COALESCE returns the first non-NULL value.
-            So if there are no expenses, we get 0 instead of NULL.
-
-        Returns:
-            float: Total amount of all expenses (0.0 if none exist)
-        """
+    def get_total_amount(self) -> Decimal:
         sql = "SELECT COALESCE(SUM(amount), 0) AS total FROM expenses"
-        try:
-            with get_connection() as conn:
-                cursor = conn.execute(sql)
-                row = cursor.fetchone()
-                return float(row["total"])
 
-        except sqlite3.Error as e:
-            logger.error(f"DB error calculating total: {e}")
+        try:
+            with _dictionary_cursor() as (_, cursor):
+                cursor.execute(sql)
+                row = cursor.fetchone()
+                return Decimal(str(row["total"]))
+        except Error as exc:
+            logger.error("DB error calculating total: %s", exc)
             raise
 
     def get_expense_count(self) -> int:
-        """
-        Count the total number of expense records.
-
-        Returns:
-            int: Total number of expenses in the database
-        """
         sql = "SELECT COUNT(*) AS count FROM expenses"
+
         try:
-            with get_connection() as conn:
-                cursor = conn.execute(sql)
+            with _dictionary_cursor() as (_, cursor):
+                cursor.execute(sql)
                 row = cursor.fetchone()
                 return int(row["count"])
-
-        except sqlite3.Error as e:
-            logger.error(f"DB error counting expenses: {e}")
+        except Error as exc:
+            logger.error("DB error counting expenses: %s", exc)
             raise
-
-    # ── UPDATE ─────────────────────────────────────────────────────────────────
 
     def update_expense(
         self,
         expense_id: int,
         title: str,
-        amount: float,
+        amount: Decimal,
         category: str,
         notes: str,
     ) -> Optional[dict]:
-        """
-        Update all fields of an existing expense.
-
-        Also sets updated_at to the current timestamp.
-        The WHERE id = ? ensures we only update the intended row.
-
-        Args:
-            expense_id: ID of the expense to update
-            title:      New title
-            amount:     New amount
-            category:   New category
-            notes:      New notes
-
-        Returns:
-            dict: The updated expense with fresh timestamps
-        """
         sql = """
             UPDATE expenses
-            SET
-                title      = ?,
-                amount     = ?,
-                category   = ?,
-                notes      = ?,
-                updated_at = datetime('now', 'localtime')
-            WHERE id = ?
+            SET title = %s, amount = %s, category = %s, notes = %s
+            WHERE id = %s
         """
+
         try:
-            with get_connection() as conn:
-                conn.execute(sql, (title, amount, category, notes, expense_id))
-                conn.commit()
-
+            with _dictionary_cursor() as (connection, cursor):
+                try:
+                    cursor.execute(
+                        sql, (title, amount, category, notes, expense_id)
+                    )
+                    connection.commit()
+                except Error:
+                    connection.rollback()
+                    raise
             return self.get_expense_by_id(expense_id)
-
-        except sqlite3.Error as e:
-            logger.error(f"DB error updating expense | id={expense_id} | {e}")
+        except Error as exc:
+            logger.error("DB error updating expense | id=%s | %s", expense_id, exc)
             raise
 
-    # ── DELETE ─────────────────────────────────────────────────────────────────
-
     def delete_expense(self, expense_id: int) -> bool:
-        """
-        Permanently delete an expense by its ID.
+        sql = "DELETE FROM expenses WHERE id = %s"
 
-        Args:
-            expense_id: The ID of the expense to delete
-
-        Returns:
-            True:  If the expense was found and deleted
-            False: If no expense with that ID was found
-
-        Note:
-            cursor.rowcount tells us how many rows were affected.
-            If rowcount == 0, the expense didn't exist.
-        """
-        sql = "DELETE FROM expenses WHERE id = ?"
         try:
-            with get_connection() as conn:
-                cursor = conn.execute(sql, (expense_id,))
-                conn.commit()
-                return cursor.rowcount > 0
-
-        except sqlite3.Error as e:
-            logger.error(f"DB error deleting expense | id={expense_id} | {e}")
+            with _dictionary_cursor() as (connection, cursor):
+                try:
+                    cursor.execute(sql, (expense_id,))
+                    deleted = cursor.rowcount > 0
+                    connection.commit()
+                    return deleted
+                except Error:
+                    connection.rollback()
+                    raise
+        except Error as exc:
+            logger.error("DB error deleting expense | id=%s | %s", expense_id, exc)
             raise

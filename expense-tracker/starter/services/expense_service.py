@@ -1,73 +1,53 @@
-"""
-services/expense_service.py - Business Logic Layer
-====================================================
+"""Business logic dan query SQL untuk Expense Tracker versi starter.
 
-INI BAGIAN YANG HARUS KAMU BANGUN.
+Pada versi ini query sengaja diletakkan dekat dengan use case agar mudah dibaca:
 
-Ini "otak" aplikasinya — tempat aturan bisnis hidup, terpisah dari
-Route (app.py) dan Repository (SQL). `ExpenseService` yang memutuskan
-APAKAH data boleh disimpan (validasi), Repository yang memutuskan
-BAGAIMANA cara menyimpannya.
+    Route -> ExpenseService -> db.execute(query, params)
 
-ATURAN MAIN:
-    - Service TIDAK PERNAH menulis SQL langsung — selalu lewat
-      self.repository.
-    - Validasi selalu dilakukan di server (bukan cuma di JavaScript),
-      karena JavaScript bisa dilewati siapa pun yang mau curang.
-    - Kalau input tidak valid, lempar ValueError dengan pesan yang
-      jelas — app.py akan menangkapnya dan menampilkannya ke user.
-
-Kalau bingung mulai dari mana, buka lagi:
-- exercises/meet-03/07-create-expense (validasi sebelum simpan)
-- exercises/meet-03/11-complete-crud (validasi kategori)
-- ../../final/services/expense_service.py — HANYA setelah kamu mencoba sendiri
+Versi `final` menunjukkan langkah berikutnya, yaitu memindahkan query-query ini
+ke Repository Layer.
 """
 
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Optional
 
+from database.db import db
 from models.expense_model import EXPENSE_CATEGORIES
-from repositories.expense_repository import ExpenseRepository
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-# TODO 1: definisikan batas aturan bisnis sebagai konstanta, misalnya:
-#   MIN_AMOUNT, MAX_AMOUNT, MAX_TITLE_LENGTH, MAX_NOTES_LENGTH
-# Nilai spesifiknya terserah kamu, yang penting konsisten dipakai di
-# _validate_and_clean() di bawah.
+MIN_AMOUNT = Decimal("0.01")
+MAX_AMOUNT = Decimal("999999999.99")
+MAX_TITLE_LENGTH = 200
+MAX_NOTES_LENGTH = 1000
 
 
 class ExpenseService:
-    """
-    Semua business logic untuk expense: validasi input, format output,
-    dan orkestrasi pemanggilan ke repository.
-    """
-
-    def __init__(self) -> None:
-        self.repository = ExpenseRepository()
-
-    # ── Categories ─────────────────────────────────────────────────────────────
+    """Validasi input, jalankan query, lalu siapkan data untuk template."""
 
     def get_categories(self) -> list[str]:
-        """Kembalikan daftar kategori yang valid (dari models/expense_model.py)."""
         return EXPENSE_CATEGORIES
 
-    # ── CREATE ─────────────────────────────────────────────────────────────────
-
     def create_expense(self, form_data: dict) -> dict:
-        """
-        Validasi form_data, simpan lewat repository, lalu kembalikan hasil
-        yang sudah diformat untuk ditampilkan.
+        data = self._validate_and_clean(form_data)
 
-        TODO:
-            1. cleaned = self._validate_and_clean(form_data)
-            2. expense = self.repository.create_expense(**cleaned)
-            3. logger.info(...) untuk mencatat keberhasilan
-            4. return self._format_expense(expense)
+        # QUERY untuk API POST /create
+        query = """
+            INSERT INTO expenses (title, amount, category, notes)
+            VALUES (%s, %s, %s, %s)
         """
-        raise NotImplementedError("create_expense() belum diimplementasikan")
+        result = db.execute(
+            query,
+            (data["title"], data["amount"], data["category"], data["notes"]),
+        )
 
-    # ── READ ───────────────────────────────────────────────────────────────────
+        expense = self.get_expense_by_id(result["lastrowid"])
+        if expense is None:
+            raise RuntimeError("Expense berhasil dibuat tetapi tidak dapat dibaca ulang")
+
+        logger.info("Expense created | id=%s", expense["id"])
+        return expense
 
     def get_expenses(
         self,
@@ -76,106 +56,182 @@ class ExpenseService:
         sort_by: str = "created_at",
         order: str = "desc",
     ) -> list[dict]:
+        allowed_columns = {
+            "id", "title", "amount", "category", "created_at", "updated_at"
+        }
+        if sort_by not in allowed_columns:
+            sort_by = "created_at"
+        order_sql = "DESC" if order.lower() == "desc" else "ASC"
+
+        conditions = []
+        params = []
+        if search:
+            conditions.append("(title LIKE %s OR notes LIKE %s)")
+            params.extend([f"%{search}%", f"%{search}%"])
+        if category:
+            conditions.append("category = %s")
+            params.append(category)
+
+        where_sql = "WHERE " + " AND ".join(conditions) if conditions else ""
+
+        # QUERY untuk API GET /expenses
+        query = f"""
+            SELECT id, title, amount, category, notes, created_at, updated_at
+            FROM expenses
+            {where_sql}
+            ORDER BY {sort_by} {order_sql}
         """
-        TODO: ambil raw_expenses dari repository, lalu format tiap
-              elemennya lewat self._format_expense() sebelum dikembalikan.
-        """
-        raise NotImplementedError("get_expenses() belum diimplementasikan")
+        rows = db.execute(query, params, fetch="all")
+        return [self._format_expense(row) for row in rows]
 
     def get_expense_by_id(self, expense_id: int) -> Optional[dict]:
+        # QUERY untuk API GET/POST /edit/<id> dan POST /delete/<id>
+        query = """
+            SELECT id, title, amount, category, notes, created_at, updated_at
+            FROM expenses
+            WHERE id = %s
         """
-        TODO: ambil dari repository, format kalau ketemu, kembalikan
-              None kalau tidak ada.
-        """
-        raise NotImplementedError("get_expense_by_id() belum diimplementasikan")
+        row = db.execute(query, (expense_id,), fetch="one")
+        return self._format_expense(row) if row else None
 
     def get_recent_expenses(self, limit: int = 5) -> list[dict]:
-        """TODO: sama seperti get_expenses(), tapi memanggil get_recent_expenses()."""
-        raise NotImplementedError("get_recent_expenses() belum diimplementasikan")
+        # QUERY transaksi terbaru untuk API GET /
+        query = """
+            SELECT id, title, amount, category, notes, created_at, updated_at
+            FROM expenses
+            ORDER BY created_at DESC
+            LIMIT %s
+        """
+        rows = db.execute(query, (int(limit),), fetch="all")
+        return [self._format_expense(row) for row in rows]
 
     def get_summary(self) -> dict:
+        # QUERY statistik utama untuk API GET / dan GET /summary
+        query = """
+            SELECT COALESCE(SUM(amount), 0) AS total_amount,
+                   COUNT(*) AS expense_count
+            FROM expenses
         """
-        Hitung total, jumlah transaksi, dan rata-rata pengeluaran.
+        row = db.execute(query, fetch="one")
+        total = Decimal(str(row["total_amount"]))
+        count = int(row["expense_count"])
+        average = total / count if count else Decimal("0.00")
 
-        TODO:
-            1. total = self.repository.get_total_amount()
-            2. count = self.repository.get_expense_count()
-            3. average = total / count kalau count > 0, selain itu 0.0
-            4. Kembalikan dict berisi total_amount, formatted_total,
-               expense_count, average_amount (pakai self._format_currency).
-        """
-        raise NotImplementedError("get_summary() belum diimplementasikan")
+        return {
+            "total_amount": total,
+            "formatted_total": self._format_currency(total),
+            "expense_count": count,
+            "average_amount": self._format_currency(average),
+        }
 
     def get_category_totals(self) -> list[dict]:
+        # QUERY ringkasan kategori untuk API GET / dan GET /summary
+        query = """
+            SELECT category,
+                   SUM(amount) AS total_amount,
+                   COUNT(*) AS expense_count
+            FROM expenses
+            GROUP BY category
+            ORDER BY total_amount DESC
         """
-        Tambahkan persentase pada data kategori dari repository.
+        rows = db.execute(query, fetch="all")
+        grand_total = sum(
+            (Decimal(str(row["total_amount"])) for row in rows),
+            Decimal("0.00"),
+        )
 
-        TODO:
-            1. Ambil category_data dari repository.
-            2. Hitung grand_total = jumlah semua total_amount.
-            3. Untuk tiap kategori, hitung percentage = amount / grand_total * 100
-               (0.0 kalau grand_total 0), lalu susun dict berisi category,
-               total_amount, formatted_amount, expense_count, percentage.
-        """
-        raise NotImplementedError("get_category_totals() belum diimplementasikan")
-
-    # ── UPDATE ─────────────────────────────────────────────────────────────────
+        result = []
+        for row in rows:
+            amount = Decimal(str(row["total_amount"]))
+            percentage = (
+                amount / grand_total * Decimal("100")
+                if grand_total > 0
+                else Decimal("0")
+            )
+            result.append({
+                **row,
+                "total_amount": amount,
+                "formatted_amount": self._format_currency(amount),
+                "percentage": float(round(percentage, 1)),
+            })
+        return result
 
     def update_expense(self, expense_id: int, form_data: dict) -> dict:
-        """
-        TODO: validasi form_data, panggil repository.update_expense(),
-              format hasilnya, log keberhasilan, kembalikan.
-        """
-        raise NotImplementedError("update_expense() belum diimplementasikan")
+        data = self._validate_and_clean(form_data)
 
-    # ── DELETE ─────────────────────────────────────────────────────────────────
+        # QUERY untuk API POST /edit/<id>
+        query = """
+            UPDATE expenses
+            SET title = %s, amount = %s, category = %s, notes = %s
+            WHERE id = %s
+        """
+        db.execute(
+            query,
+            (
+                data["title"], data["amount"], data["category"],
+                data["notes"], expense_id,
+            ),
+        )
+
+        expense = self.get_expense_by_id(expense_id)
+        if expense is None:
+            raise ValueError("Expense tidak ditemukan.")
+        logger.info("Expense updated | id=%s", expense_id)
+        return expense
 
     def delete_expense(self, expense_id: int) -> bool:
-        """
-        TODO: panggil repository.delete_expense(), log hasilnya
-              (berhasil/tidak ketemu), kembalikan True/False-nya.
-        """
-        raise NotImplementedError("delete_expense() belum diimplementasikan")
-
-    # ── Private Helpers ────────────────────────────────────────────────────────
+        # QUERY untuk API POST /delete/<id>
+        query = "DELETE FROM expenses WHERE id = %s"
+        result = db.execute(query, (expense_id,))
+        deleted = result["rowcount"] > 0
+        if deleted:
+            logger.info("Expense deleted | id=%s", expense_id)
+        return deleted
 
     def _validate_and_clean(self, form_data: dict) -> dict:
-        """
-        Validasi & bersihkan input form. Lempar ValueError dengan pesan
-        yang jelas kalau ada yang tidak valid.
+        title = form_data.get("title", "").strip()
+        amount_text = form_data.get("amount", "").strip()
+        category = form_data.get("category", "").strip()
+        notes = form_data.get("notes", "").strip()
 
-        TODO — validasi minimal yang harus ada:
-            - title: wajib diisi, tidak boleh melebihi batas panjang.
-            - amount: wajib diisi, harus bisa diubah jadi float, harus
-              berada di antara MIN_AMOUNT dan MAX_AMOUNT.
-            - category: wajib diisi, harus ada di EXPENSE_CATEGORIES.
-            - notes: opsional, tapi tetap ada batas panjang.
-        Kembalikan dict berisi title, amount (float, dibulatkan 2
-        desimal), category, notes yang sudah bersih (.strip()).
-        """
-        raise NotImplementedError("_validate_and_clean() belum diimplementasikan")
+        if not title:
+            raise ValueError("Title is required.")
+        if len(title) > MAX_TITLE_LENGTH:
+            raise ValueError(f"Title must be {MAX_TITLE_LENGTH} characters or less.")
+        if not amount_text:
+            raise ValueError("Amount is required.")
 
-    def _format_expense(self, expense: dict) -> dict:
-        """
-        Tambahkan field siap-tampil ke dict expense mentah dari repository.
+        try:
+            amount = Decimal(amount_text)
+        except InvalidOperation:
+            raise ValueError("Amount must be a valid number.")
+        if not amount.is_finite():
+            raise ValueError("Amount must be a finite number.")
+        if amount < MIN_AMOUNT or amount > MAX_AMOUNT:
+            raise ValueError(
+                f"Amount must be between {MIN_AMOUNT} and {MAX_AMOUNT}."
+            )
+        if category not in EXPENSE_CATEGORIES:
+            raise ValueError("Please select a valid category.")
+        if len(notes) > MAX_NOTES_LENGTH:
+            raise ValueError(f"Notes must be {MAX_NOTES_LENGTH} characters or less.")
 
-        TODO: kembalikan salinan `expense` (spread pakai **expense) plus
-              field tambahan "formatted_amount" (pakai _format_currency)
-              dan "short_notes" (pakai _truncate, max_length=60).
-        """
-        raise NotImplementedError("_format_expense() belum diimplementasikan")
+        return {
+            "title": title,
+            "amount": amount.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
+            "category": category,
+            "notes": notes,
+        }
 
-    def _format_currency(self, amount: float) -> str:
-        """
-        TODO: format angka jadi string dengan pemisah ribuan, 2 desimal.
-              Contoh: 25000 → "25,000.00". Hint: f-string "{amount:,.2f}".
-        """
-        raise NotImplementedError("_format_currency() belum diimplementasikan")
+    @staticmethod
+    def _format_expense(expense: dict) -> dict:
+        notes = expense.get("notes", "") or ""
+        return {
+            **expense,
+            "formatted_amount": f"{expense['amount']:,.2f}",
+            "short_notes": notes if len(notes) <= 60 else notes[:60] + "...",
+        }
 
-    def _truncate(self, text: str, max_length: int) -> str:
-        """
-        TODO: kalau panjang `text` <= max_length, kembalikan apa adanya.
-              Kalau lebih panjang, potong sampai max_length karakter dan
-              tambahkan "...".
-        """
-        raise NotImplementedError("_truncate() belum diimplementasikan")
+    @staticmethod
+    def _format_currency(amount: Decimal) -> str:
+        return f"{amount:,.2f}"

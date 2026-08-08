@@ -1,8 +1,10 @@
 # RainCode Expense Tracker — Final
 
-> A production-inspired, beginner-friendly Expense Tracker built with Python, Flask, and SQLite — crafted for [RainCode Open Class](https://raincode.id).
+> A production-inspired, beginner-friendly Expense Tracker built with Python, Flask, and MySQL — crafted for [RainCode Open Class](https://raincode.id).
 
-This is the **complete, working version** of the Expense Tracker capstone — the answer key. Read it during [exercises/meet-04](../../../exercises/meet-04) to practice reading real code, or compare it against your own build once you're done with [../starter](../starter). Don't copy from here line by line before you've tried building it yourself — you'll only be copying the syntax, not the understanding.
+This is the layered version of the Expense Tracker capstone. Compare it with
+[../starter](../starter): starter keeps SQL beside each Service use case, while
+this version moves SQL into a Repository Layer for better separation.
 
 ---
 
@@ -34,7 +36,7 @@ This is a **full-stack web application** that allows users to track personal exp
 ```
 Backend:   Python 3.12+, Flask 3.x
 Frontend:  HTML5, CSS3 (CSS Variables), Vanilla JavaScript
-Database:  SQLite (file-based, no server needed)
+Database:  MySQL 8.x with MySQL Connector/Python
 Font:      Inter (Google Fonts)
 Logging:   Python standard library logging module
 Config:    python-dotenv (.env files)
@@ -70,12 +72,12 @@ Browser Request
                          ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │  database/db.py — Database Layer                                │
-│  Manages SQLite connections. One place to change DB settings.   │
+│  Manages MySQL connections. One place to change DB settings.    │
 └────────────────────────┬────────────────────────────────────────┘
                          │ reads/writes
                          ▼
-                    SQLite Database
-                (database/expense_tracker.db)
+                     MySQL Database
+                    (expense_tracker)
 ```
 
 ### Why This Architecture?
@@ -87,7 +89,7 @@ Browser Request
 | Repository | Run SQL queries | Validate data, handle HTTP |
 | Database (`db.py`) | Open/close connections | Write queries |
 
-**Benefit:** If you switch from SQLite to PostgreSQL, you change **only** `db.py` and `expense_repository.py`. Nothing else changes.
+**Benefit:** Database-specific code is isolated in `db.py` and `expense_repository.py`; routes and templates do not open database connections.
 
 ---
 
@@ -113,8 +115,7 @@ expense-tracker/
 │   └── expense_service.py    ← Business logic, validation, formatting
 │
 ├── database/
-│   ├── db.py                 ← SQLite connection management
-│   └── expense_tracker.db    ← SQLite database file (auto-created)
+│   └── db.py                 ← MySQL connection and schema initialization
 │
 ├── utils/
 │   └── logger.py             ← Logging configuration
@@ -162,6 +163,7 @@ expense-tracker/
 
 - Python 3.12 or newer
 - pip (Python package manager)
+- MySQL Server 8.x
 
 ### Steps
 
@@ -204,19 +206,32 @@ cp .env.example .env
 # Edit .env if needed (defaults work out of the box for development)
 ```
 
-**5. Run the application**
+**5. Create the MySQL database and user**
+
+```sql
+CREATE DATABASE expense_tracker
+    CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'expense_app'@'localhost' IDENTIFIED BY 'change-this-local-password';
+GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, INDEX
+    ON expense_tracker.* TO 'expense_app'@'localhost';
+```
+
+Set the same credentials in `.env`. The application creates the `expenses`
+table, but the database and application user must already exist.
+
+**6. Run the application**
 
 ```bash
 python app.py
 ```
 
-**6. Open in browser**
+**7. Open in browser**
 
 ```
 http://localhost:5000
 ```
 
-The database (`database/expense_tracker.db`) and log file (`logs/app.log`) are created automatically on first run.
+The `expenses` table and log file (`logs/app.log`) are created automatically on first run.
 
 ---
 
@@ -253,14 +268,15 @@ Visit `/summary` for a visual category breakdown with percentage bars.
 
 ```sql
 CREATE TABLE expenses (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    title       TEXT    NOT NULL,
-    amount      REAL    NOT NULL,
-    category    TEXT    NOT NULL DEFAULT 'Other',
-    notes       TEXT             DEFAULT '',
-    created_at  TEXT    NOT NULL DEFAULT (datetime('now', 'localtime')),
-    updated_at  TEXT    NOT NULL DEFAULT (datetime('now', 'localtime'))
-);
+    id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    title       VARCHAR(200)    NOT NULL,
+    amount      DECIMAL(15, 2)  NOT NULL,
+    category    VARCHAR(100)    NOT NULL DEFAULT 'Other',
+    notes       TEXT            NOT NULL,
+    created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP
+                                            ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
 ---
@@ -274,7 +290,7 @@ All significant events are logged to both **terminal** and **`logs/app.log`**.
 2024-01-15 14:31:02 | INFO     | services.expense_service      | Expense created successfully | expense_id=1 category=Food amount=25000.0
 2024-01-15 14:31:45 | WARNING  | services.expense_service      | Validation error on create: Amount is required.
 2024-01-15 14:32:10 | INFO     | services.expense_service      | Expense deleted successfully | expense_id=1
-2024-01-15 14:35:00 | ERROR    | database.db                   | Database initialization failed: [Errno 13] Permission denied
+2024-01-15 14:35:00 | ERROR    | database.db                   | Database initialization failed: Access denied
 ```
 
 **Log Levels:**
@@ -284,7 +300,7 @@ All significant events are logged to both **terminal** and **`logs/app.log`**.
 | `INFO` | Normal operations: started, created, updated, deleted |
 | `WARNING` | Validation errors, unexpected input, missing resources |
 | `ERROR` | Database failures, unexpected exceptions |
-| `CRITICAL` | App cannot start (e.g. database directory not writable) |
+| `CRITICAL` | App cannot start (e.g. MySQL unavailable or credentials invalid) |
 
 ---
 
@@ -292,7 +308,7 @@ All significant events are logged to both **terminal** and **`logs/app.log`**.
 
 | Practice | Where Applied |
 |---|---|
-| **Parameterized SQL Queries** | All queries in `expense_repository.py` use `?` placeholders — prevents SQL Injection |
+| **Parameterized SQL Queries** | All values in `expense_repository.py` use `%s` placeholders — prevents SQL Injection |
 | **Server-side Validation** | `expense_service.py` validates all input — client-side JavaScript can be bypassed |
 | **POST for Mutations** | Create, Update, Delete use `POST`, not `GET` — prevents accidental/crawler-triggered actions |
 | **Input Sanitization** | All form values are `.strip()`-ped to remove leading/trailing whitespace |
@@ -328,10 +344,10 @@ All significant events are logged to both **terminal** and **`logs/app.log`**.
 7. Service calls repository.create_expense(title, amount, category, notes)
       │
       ▼
-8. Repository runs: INSERT INTO expenses (title, amount, category, notes) VALUES (?, ?, ?, ?)
+8. Repository runs: INSERT INTO expenses (title, amount, category, notes) VALUES (%s, %s, %s, %s)
       │
       ▼
-9. SQLite writes the row, returns auto-generated id
+9. MySQL writes the row, returns auto-generated id
       │
       ▼
 10. Repository fetches the complete row (with timestamps) and returns it
@@ -360,7 +376,7 @@ After studying this project, you will understand:
 
 ### Python Fundamentals
 - [x] Classes and methods
-- [x] Type hints (`str`, `float`, `Optional[dict]`, `list[dict]`)
+- [x] Type hints (`str`, `Decimal`, `Optional[dict]`, `list[dict]`)
 - [x] Dataclasses (`@dataclass`)
 - [x] Exception handling (`try/except/raise`)
 - [x] f-strings and string formatting
@@ -379,12 +395,12 @@ After studying this project, you will understand:
 - [x] Error handlers (`@app.errorhandler`)
 
 ### Database
-- [x] SQLite basics
+- [x] MySQL connection and transaction basics
 - [x] SQL CRUD: INSERT, SELECT, UPDATE, DELETE
 - [x] SQL aggregation: SUM, COUNT, GROUP BY
 - [x] Parameterized queries (SQL Injection prevention)
-- [x] `sqlite3` Python library
-- [x] `row_factory = sqlite3.Row`
+- [x] MySQL Connector/Python
+- [x] Dictionary cursors, commit, rollback, and resource cleanup
 
 ### Software Engineering
 - [x] Layered architecture (Route → Service → Repository)
@@ -414,9 +430,9 @@ This project is designed as a foundation. Here are natural next steps:
 | **Multi-User Support** | Foreign keys, user_id in expenses table |
 | **REST API** | Flask blueprints, `jsonify()`, API design |
 | **CSV Export** | Python `csv` module, file downloads |
-| **Monthly Reports** | Date filtering, SQLite date functions |
+| **Monthly Reports** | Date filtering and MySQL date functions |
 | **Pagination** | LIMIT/OFFSET in SQL, page number tracking |
-| **Cloud Database** | PostgreSQL, environment-based DB switching |
+| **Cloud Database** | Managed MySQL, TLS, backups, and connection pooling |
 | **Deployment** | Gunicorn, Nginx, Railway, Render, or Fly.io |
 | **Unit Tests** | `pytest`, mocking, testing each layer separately |
 | **Dashboard Charts** | Chart.js integration with category data |
@@ -427,7 +443,7 @@ This project is designed as a foundation. Here are natural next steps:
 
 When presenting this project, you can describe it as:
 
-> *"A full-stack Expense Tracker application built with Python and Flask, using a 3-layer architecture (Route → Service → Repository) and SQLite for data persistence. Features include CRUD operations, search/filter/sort, category analytics, structured logging, input validation, and SQL Injection prevention via parameterized queries. The responsive UI is built with vanilla CSS (CSS Variables) and JavaScript — no frameworks."*
+> *"A full-stack Expense Tracker application built with Python and Flask, using a 3-layer architecture (Route → Service → Repository) and MySQL for data persistence. Features include CRUD operations, search/filter/sort, category analytics, structured logging, Decimal-based money handling, transactions, and SQL Injection prevention via parameterized queries. The responsive UI is built with vanilla CSS and JavaScript."*
 
 ---
 
@@ -439,4 +455,4 @@ Learn more: [raincode.id](https://raincode.id)
 
 ---
 
-*Built with Python + Flask + SQLite · RainCode Open Class · 2024*
+*Built with Python + Flask + MySQL · RainCode Open Class*
