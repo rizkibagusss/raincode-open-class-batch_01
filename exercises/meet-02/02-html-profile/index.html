@@ -17,14 +17,13 @@
 
      Kamu TIDAK menyalin contoh itu — gantilah dengan datamu sendiri.
 -->
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Profil Saya</title>
-</head>
-<body>
-
+  </head>
+  <body>
     <!-- ============================================================
          BAGIAN 1 — Header (foto, nama, peran)
          ============================================================
@@ -32,19 +31,25 @@
          dan satu kalimat singkat tentang dirimu.
     -->
     <header>
-        <!-- TODO 1: Tambahkan <img> untuk fotomu.
+      <!-- TODO 1: Tambahkan <img> untuk fotomu.
              Belum punya file foto sendiri? Pakai placeholder dulu:
                <img src="https://placehold.co/120x120" alt="Foto Nama Kamu" width="120">
         -->
+      <center>
+        <img
+          src="https://iffhs.com/storage/img/posts/IMG_5818.JPG"
+          alt="haaland"
+          width="300"
+        />
+      </center>
 
+      <!-- TODO 2: Tambahkan <h1> berisi namamu -->
+      <h1>Erling Braut Haaland</h1>
 
-        <!-- TODO 2: Tambahkan <h1> berisi namamu -->
-
-
-        <!-- TODO 3: Tambahkan <p> berisi peran/status singkat.
+      <!-- TODO 3: Tambahkan <p> berisi peran/status singkat.
              Contoh pola: "Calon Web Developer dari <kotamu>"
         -->
-
+      <p>Pemain Sepakbola</p>
     </header>
 
     <!-- ============================================================
@@ -54,8 +59,7 @@
          beberapa <section> — satu section untuk satu topik.
     -->
     <main>
-
-        <!-- TODO 4: Buat <section> "Tentang Saya" berisi:
+      <!-- TODO 4: Buat <section> "Tentang Saya" berisi:
              - <h2>Tentang Saya</h2>
              - <p> 2-3 kalimat cerita singkat tentang dirimu
              Struktur:
@@ -64,19 +68,87 @@
                  <p>...</p>
                </section>
         -->
+      <section>
+        <h2>Tentang Saya</h2>
+        <p>
+          Erling Braut Haaland (lahir 21 Juli 2000) adalah pemain sepak bola
+          profesional Norwegia yang bermain sebagai penyerang untuk klub Liga
+          Utama Inggris, Manchester City dan tim nasional Norwegia. Dianggap
+          sebagai salah satu pemain terbaik di dunia, ia dikenal karena
+          kecepatan, kekuatan, penempatan posisi, dan penyelesaian akhir di
+          dalam kotak penalti. Pada musim debutnya di Liga Utama, Haaland
+          memecahkan rekor gol terbanyak yang dicetak oleh seorang pemain dalam
+          satu musim, dengan 36 gol.
+        </p>
+      </section>
+      <hr />
+      <section>
+        <h2>Riwayat Klub</h2>
+        <table border="1" cellpadding="5" cellspacing="0">
+          <tr>
+            <th>Tahun</th>
+            <th>Nama Klub</th>
+            <th>Negara</th>
+          </tr>
+          <tr>
+            <td>2015 - 2017</td>
+            <td>Bryne FK</td>
+            <td>Norwegia</td>
+          </tr>
+          <tr>
+            <td>2017 - 2019</td>
+            <td>Molde FK</td>
+            <td>Norwegia</td>
+          </tr>
+          <tr>
+            <td>2019 - 2020</td>
+            <td>Red Bull Salzburg</td>
+            <td>Austria</td>
+          </tr>
+          <tr>
+            <td>2020 - 2022</td>
+            <td>Borussia Dortmund</td>
+            <td>Jerman</td>
+          </tr>
+          <tr>
+            <td>2022 - Sekarang</td>
+            <td>Manchester City</td>
+            <td>Inggris</td>
+          </tr>
+        </table>
+      </section>
+      <hr />
 
-
-        <!-- TODO 5: Buat <section> "Hobi" berisi:
+      <!-- TODO 5: Buat <section> "Hobi" berisi:
              - <h2>Hobi</h2>
              - <ul><li>...</li></ul> minimal 3 hobi
         -->
+      <section>
+        <h2>Hobi</h2>
+        <ul>
+          <li>Bermain Game</li>
+          <li>Camping</li>
+          <li>Berolahraga</li>
+        </ul>
+      </section>
+      <hr />
 
-
-        <!-- TODO 6: Buat <section> "Kontak" berisi:
+      <!-- TODO 6: Buat <section> "Kontak" berisi:
              - <h2>Kontak</h2>
              - <a href="..."> ke salah satu sosial media/kontakmu
         -->
 
+      <section>
+        <h2>Kontak</h2>
+
+        <a href="https://www.instagram.com/erling/?hl=en" target="_blank"
+          >Instagram</a
+        ><br />
+        <a href="https://www.tiktok.com/@erling" target="_blank">TikTok</a
+        ><br />
+        <a href="https://x.com/Erling?lang=en" target="_blank">X</a>
+      </section>
+      <hr />
     </main>
 
     <!-- ============================================================
@@ -85,6 +157,8 @@
     <!-- TODO 7: Tambahkan <footer> berisi satu <p> penutup.
          Contoh: <footer><p>Dibuat dengan RainCode Open Class</p></footer>
     -->
-
-</body>
+    <footer>
+      <p>Created With🔥 and ❤️‍🔥</p>
+    </footer>
+  </body>
 </html>
