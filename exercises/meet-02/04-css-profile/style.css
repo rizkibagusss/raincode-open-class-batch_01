@@ -4,10 +4,10 @@
    BAGIAN 1 — Latar halaman & Tipografi Dasar
    ============================================================ */
 body {
-    background-color: #F3FAF8;
+    background-color: #F0F9FF; /* Biru langit sangat muda */
     font-family: Arial, Helvetica, sans-serif;
     color: #333333;
-    line-height: 1.6;
+    line-height: 1.3;
     margin: 0;
     padding: 20px;
 }
@@ -17,11 +17,11 @@ body {
    ============================================================ */
 .card {
     background: #ffffff;
-    max-width: 500px; /* Diperlebar sedikit agar tabel bernapas */
+    max-width: 500px;
     margin: 40px auto;
     padding: 32px 40px;
     border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); /* Shadow minimalis */
+    box-shadow: 0 10px 30px rgba(3, 105, 161, 0.08); /* Shadow biru tipis */
     text-align: center;
 }
 
@@ -30,16 +30,16 @@ body {
    ============================================================ */
 .foto {
     width: 140px;
-    height: 140px; /* Wajib ada height yang sama dengan width */
-    object-fit: cover; /* Agar gambar tidak gepeng */
+    height: 140px;
+    object-fit: cover;
     border-radius: 50%;
     margin-bottom: 12px;
-    border: 4px solid #F3FAF8;
+    border: 4px solid #E0F2FE; /* Border biru muda */
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 
 h1 {
-    color: #0F766E;
+    color: #0369A1; /* Biru Navy tegas */
     margin: 0 0 4px 0;
     font-size: 1.6rem;
 }
@@ -51,7 +51,7 @@ header p {
 }
 
 h2 {
-    color: #0F766E;
+    color: #0369A1;
     font-size: 1.2rem;
     margin-bottom: 16px;
     text-transform: uppercase;
@@ -74,7 +74,7 @@ hr {
 }
 
 /* ============================================================
-   BAGIAN 5 — Tabel Riwayat Klub (Clean Table)
+   BAGIAN 5 — Tabel Riwayat Klub
    ============================================================ */
 table {
     width: 100%;
@@ -84,20 +84,19 @@ table {
 }
 
 th {
-    background-color: #F8FAFC;
-    color: #0F766E;
+    background-color: #E0F2FE; /* Header biru muda */
+    color: #0369A1;
     padding: 12px;
     font-weight: 600;
-    border-bottom: 2px solid #E2E8F0;
+    border-bottom: 2px solid #BAE6FD;
 }
 
 td {
     padding: 12px;
-    border-bottom: 1px solid #E2E8F0;
+    border-bottom: 1px solid #F1F5F9;
     color: #475569;
 }
 
-/* Menghilangkan garis vertikal bawaan HTML */
 table, th, td {
     border-left: none;
     border-right: none;
@@ -105,10 +104,10 @@ table, th, td {
 }
 
 /* ============================================================
-   BAGIAN 6 — Hobi (Chips/Tags Style)
+   BAGIAN 6 — Hobi
    ============================================================ */
 .daftar-hobi {
-    list-style: none; /* Hilangkan titik bullet */
+    list-style: none;
     padding: 0;
     display: flex;
     justify-content: center;
@@ -117,35 +116,35 @@ table, th, td {
 }
 
 .daftar-hobi li {
-    background: #E2E8F0;
-    color: #334155;
+    background: #F0F9FF;
+    color: #0369A1;
+    border: 1px solid #BAE6FD; /* Outline tipis */
     padding: 6px 16px;
     border-radius: 20px;
     font-size: 0.85rem;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 /* ============================================================
-   BAGIAN 7 — Kontak (Tombol)
+   BAGIAN 7 — Kontak
    ============================================================ */
-/* Menyasar semua elemen <a> di dalam section terakhir */
 section a {
     display: inline-block;
-    background: #0D9488;
+    background: #0EA5E9; /* Man City Sky Blue */
     color: white;
     padding: 10px 24px;
-    margin: 6px 4px; /* Jarak antar tombol */
+    margin: 6px 4px;
     border-radius: 30px;
     text-decoration: none;
     font-size: 0.9rem;
     font-weight: 600;
-    transition: all 0.3s ease; /* Animasi mulus saat dihover */
+    transition: all 0.3s ease;
 }
 
 section a:hover {
-    background: #0F766E;
-    transform: translateY(-2px); /* Efek tombol naik sedikit */
-    box-shadow: 0 4px 10px rgba(13, 148, 136, 0.3);
+    background: #0284C7; /* Biru yang lebih gelap saat di-hover */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3);
 }
 
 /* ============================================================
