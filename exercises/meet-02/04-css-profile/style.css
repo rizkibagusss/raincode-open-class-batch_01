@@ -1,96 +1,159 @@
 /* style.css */
-/* Topik: Profil Polos -> Cantik dengan CSS */
 
 /* ============================================================
-   MISI KAMU
-   ============================================================
-   HTML profil di index.html isinya SAMA seperti di 02-html-profile —
-   yang beda cuma dibungkus <div class="card">. Tugasmu: sulap kartu
-   polos itu jadi cantik, murni lewat CSS di file ini.
-
-   Ini cara kerja frontend sehari-hari: susun struktur dulu (HTML),
-   baru percantik (CSS).
+   BAGIAN 1 — Latar halaman & Tipografi Dasar
    ============================================================ */
-
+body {
+    background-color: #F3FAF8;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #333333;
+    line-height: 1.6;
+    margin: 0;
+    padding: 20px;
+}
 
 /* ============================================================
-   BAGIAN 1 — Latar halaman
+   BAGIAN 2 — Bungkus Kartu (Card)
    ============================================================ */
-
-/* TODO 1: Beri body warna latar & jenis huruf.
-   Pola:
-     body {
-         background: #F3FAF8;
-         font-family: Arial;
-     }
-*/
-
+.card {
+    background: #ffffff;
+    max-width: 500px; /* Diperlebar sedikit agar tabel bernapas */
+    margin: 40px auto;
+    padding: 32px 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05); /* Shadow minimalis */
+    text-align: center;
+}
 
 /* ============================================================
-   BAGIAN 2 — Bungkus jadi kartu
+   BAGIAN 3 — Header: Foto & Judul
    ============================================================ */
+.foto {
+    width: 140px;
+    height: 140px; /* Wajib ada height yang sama dengan width */
+    object-fit: cover; /* Agar gambar tidak gepeng */
+    border-radius: 50%;
+    margin-bottom: 12px;
+    border: 4px solid #F3FAF8;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
 
-/* TODO 2: Lengkapi .card supaya jadi kotak kartu yang rapi:
-     - background: white;
-     - max-width: 340px;
-     - margin: 40px auto;      <- "auto" bikin kartu ke tengah halaman
-     - padding: 24px;
-     - border-radius: 16px;
-     - text-align: center;
-   Pola:
-     .card {
-         background: white;
-         max-width: 340px;
-         margin: 40px auto;
-         padding: 24px;
-         border-radius: 16px;
-         text-align: center;
-     }
-*/
+h1 {
+    color: #0F766E;
+    margin: 0 0 4px 0;
+    font-size: 1.6rem;
+}
 
+header p {
+    color: #64748B;
+    margin-top: 0;
+    font-weight: 500;
+}
+
+h2 {
+    color: #0F766E;
+    font-size: 1.2rem;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
 
 /* ============================================================
-   BAGIAN 3 — Detail: foto & judul
+   BAGIAN 4 — Tentang Saya
    ============================================================ */
+section p {
+    color: #475569;
+    font-size: 0.95rem;
+    text-align: justify;
+}
 
-/* TODO 3: Buat .foto jadi bulat.
-   Pola:
-     .foto {
-         width: 100px;
-         border-radius: 50%;   <- 50% pada elemen persegi = jadi lingkaran
-     }
-*/
-
-
-/* TODO 4: Beri warna pada h1 di dalam kartu.
-   Pola:
-     h1 {
-         color: #0F766E;
-     }
-*/
-
+hr {
+    border: none;
+    border-top: 1px solid #E2E8F0;
+    margin: 24px 0;
+}
 
 /* ============================================================
-   BAGIAN 4 — Tombol "Hubungi Saya"
+   BAGIAN 5 — Tabel Riwayat Klub (Clean Table)
    ============================================================ */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    text-align: left;
+}
 
-/* TODO 5: Lengkapi .btn supaya terlihat seperti tombol, bukan tautan biasa:
-     - background: #0D9488;
-     - color: white;
-     - padding: 8px 20px;
-     - border-radius: 20px;
-   Perhatikan: karena .btn ini elemen <a>, tambahkan juga
-     text-decoration: none;
-   supaya garis bawah bawaan tautan hilang.
-*/
+th {
+    background-color: #F8FAFC;
+    color: #0F766E;
+    padding: 12px;
+    font-weight: 600;
+    border-bottom: 2px solid #E2E8F0;
+}
 
+td {
+    padding: 12px;
+    border-bottom: 1px solid #E2E8F0;
+    color: #475569;
+}
+
+/* Menghilangkan garis vertikal bawaan HTML */
+table, th, td {
+    border-left: none;
+    border-right: none;
+    border-top: none;
+}
 
 /* ============================================================
-   BONUS (opsional)
-   ============================================================
-   - Beri .daftar-hobi jarak antar item pakai margin pada li-nya.
-   - Tambahkan efek saat kursor menghover tombol:
-       .btn:hover {
-           background: #0F766E;
-       }
-*/
+   BAGIAN 6 — Hobi (Chips/Tags Style)
+   ============================================================ */
+.daftar-hobi {
+    list-style: none; /* Hilangkan titik bullet */
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.daftar-hobi li {
+    background: #E2E8F0;
+    color: #334155;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* ============================================================
+   BAGIAN 7 — Kontak (Tombol)
+   ============================================================ */
+/* Menyasar semua elemen <a> di dalam section terakhir */
+section a {
+    display: inline-block;
+    background: #0D9488;
+    color: white;
+    padding: 10px 24px;
+    margin: 6px 4px; /* Jarak antar tombol */
+    border-radius: 30px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease; /* Animasi mulus saat dihover */
+}
+
+section a:hover {
+    background: #0F766E;
+    transform: translateY(-2px); /* Efek tombol naik sedikit */
+    box-shadow: 0 4px 10px rgba(13, 148, 136, 0.3);
+}
+
+/* ============================================================
+   BAGIAN 8 — Footer
+   ============================================================ */
+footer {
+    text-align: center;
+    color: #94A3B8;
+    font-size: 0.85rem;
+    margin-top: 24px;
+}
