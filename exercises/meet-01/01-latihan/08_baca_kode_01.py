@@ -19,18 +19,18 @@ poin = poin * 2
 
 aktif = poin > 25
 
-print(poin)    # pertanyaan 1: berapa ini?
-print(aktif)   # pertanyaan 2: True atau False?
+print(poin)    # pertanyaan 1: berapa ini? 30
+print(aktif)   # pertanyaan 2: True atau False? TRUE
 
 # ---- Pertanyaan ----
 # 1. Berapa nilai poin setelah baris ketiga (poin = poin + bonus)?
-#    Jawab: ???
+#    Jawab: 15
 #
 # 2. Berapa nilai poin setelah baris keempat (poin = poin * 2)?
-#    Jawab: ???
+#    Jawab: 30
 #
 # 3. Kenapa aktif bernilai True (atau False)?
-#    Jawab: ???
+#    Jawab: KARENA POIN LEBIH BESAR DARIPADA 25
 #
 # 4. Kalau poin awalnya 5 (bukan 10), apa yang berubah?
-#    Jawab: ???
+#    Jawab: YANG BERUBAH ADALAH JUMLAH POIN, LALU NILAI AKTIF JUGA BERUBAH MENJADI FALSE

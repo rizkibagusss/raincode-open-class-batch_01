@@ -16,9 +16,20 @@
 # Nilai sudah disediakan di bawah. Kamu tinggal tulis
 # logika if / elif / else-nya.
 
-nilai = 82
+nilai = 12
 
 # Tulis kode kamu di sini:
+
+if nilai >= 90:
+    print("A, Sempurna!")
+elif nilai >= 80:
+    print ("B")
+elif nilai >= 70:
+    print("C")
+elif nilai >= 60:
+    print("D")
+else:
+    print("E,Ayo belajar lagi!")
 
 
 # Output yang diharapkan (untuk nilai = 82):

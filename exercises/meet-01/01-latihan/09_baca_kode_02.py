@@ -23,20 +23,20 @@ hasil1 = cek_kelulusan(70, 80)
 hasil2 = cek_kelulusan(55, 90)
 hasil3 = cek_kelulusan(80, 60)
 
-print(hasil1)   # pertanyaan 1: ???
-print(hasil2)   # pertanyaan 2: ???
-print(hasil3)   # pertanyaan 3: ???
+print(hasil1)   # pertanyaan 1: LULUS
+print(hasil2)   # pertanyaan 2: TIDAK LULUS - NILAI KURAMG
+print(hasil3)   # pertanyaan 3: TIDAK LULUS - KEHADIRAN KURANG
 
 # ---- Pertanyaan ----
 # 1. Apa yang dicetak untuk hasil1? Kenapa?
-#    Jawab: ???
+#    Jawab: LULUS, KARENA BARIS KEDUA KETIKA PENGECEKAN NILAI MEMENUHI
 #
 # 2. Apa yang dicetak untuk hasil2? Kenapa?
-#    Jawab: ???
+#    Jawab: TIDAK LULUS - NILAI KURANG, KARENA BARIS KETIGA KETIKA PENGECEKAN MEMENUHI
 #
 # 3. Apa yang dicetak untuk hasil3? Kenapa?
-#    Jawab: ???
+#    Jawab: TIDAK LULUS - KEHADIRAN KURANG, SAAT PENGECEKAN GARIS PERTAMA ANGKA MEMENUHI SYARAT TERSEBUT.
 #
 # 4. Kondisi mana yang dicek lebih dulu — kehadiran atau nilai?
 #    Kenapa urutan itu penting?
-#    Jawab: ???
+#    Jawab: URUTAN INI PENTING KARENA RETURN LANGSUNG MENGHENTIKAN FUNGSI. BAYANGKAN KALAU NILAI >= 60 DITARUH PALING ATAS. UNTUK MURID DI HASIL3 (NILAI 80, TAPI KEHADIRAN CUMA 60), PROGRAM AKAN MELIHAT NILAI 80, LANGSUNG ME-RETURN "LULUS", DAN BERHENTI SAAT ITU JUGA. PROGRAM TIDAK AKAN SADAR KALAU MURID ITU SERING BOLOS! ITULAH KENAPA SYARAT KEHADIRAN YANG KETAT HARUS DITARUH PALING ATAS SEBAGAI "PENYARING" PERTAMA.

@@ -18,7 +18,7 @@ else:
 print("Bayar:", bayar)   # tebak: Bayar 40000.0
 
 # Pertanyaan:
-# - Kenapa blok "else" tidak dijalankan? KARENA KODE MEMBACA DARI ATAS KEBAWAH, KARENA ADA_DISKON LANGSUNG DIBACA DAN DAPAT DIHITUNG MAKAN PROGRAM AKAN SELESAI
+# - Kenapa blok "else" tidak dijalankan? JADI, BLOK ELSE TIDAK DIJALANKAN KARENA KONDISI IF NYA SUDAH TERPENUHI (TRUE)
 # - Coba ubah ada_diskon = False, kira-kira hasilnya apa? BERARTI HASIL TEBAKAN PRINT MENJADI "50000"
 
 

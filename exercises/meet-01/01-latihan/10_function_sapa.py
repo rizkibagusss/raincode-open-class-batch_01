@@ -30,11 +30,18 @@ print(pesan)
 
 # Tulis fungsinya di sini:
 
+def sapa(nama, kota):
+    return (f"Halo, {nama}! Apa Kabar?\nHalo, {nama} dari {kota}")
+
 
 # Panggil fungsinya di sini (contoh):
 # print(sapa("Andi"))
 # print(sapa("Sari"))
 # print(sapa("Dika"))
+
+print(sapa("Andi", "Malang"))
+print(sapa("Sari","Yogyakarta"))
+print(sapa("Dika", "Tangerang"))
 
 
 # ============================================================
