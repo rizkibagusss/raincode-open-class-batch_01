@@ -9,17 +9,18 @@
 #
 # Ingat: hasil boolean cuma dua pilihan — True atau False
 
+print("=============== BAGIAN 1 - TEBAK DULU, BARU JALANKAN ====================")
 umur = 17
 
-print(umur >= 18)        # tebak: ???
-print(umur == 17)        # tebak: ???
-print(umur != 20)        # tebak: ???
-print(not (umur >= 18))  # tebak: ???
+print(umur >= 18)        # tebak: FALSE
+print(umur == 17)        # tebak: TRUE
+print(umur != 20)        # tebak: TRUE
+print(not (umur >= 18))  # tebak: TRUE
 
 # Coba jawab dulu sebelum jalankan:
-# - Kenapa baris pertama hasilnya False?
-# - Apa perbedaan == dengan >=?
-# - Apa yang dilakukan "not" terhadap hasil boolean?
+# - Kenapa baris pertama hasilnya False? KARENA 17 LEBIH KECIL DARI 18.
+# - Apa perbedaan == dengan >=? KALAU == MENCARI VALUE DAN TYPE DATA YANG SAMA, KALAU >= MENCARI YANG LEBIH BESAR TAPI VALUENYA BOLEH SAMA
+# - Apa yang dilakukan "not" terhadap hasil boolean? MERUBAH HASIL DARI BOOLEAN
 
 
 # ============================================================
@@ -28,13 +29,14 @@ print(not (umur >= 18))  # tebak: ???
 # Ganti setiap None dengan ekspresi boolean yang benar.
 # Kalau output-nya masih None, berarti belum kamu ganti.
 
+print("======================= BAGIAN 2 - LENGKAPI KODENYA ====================")
 nilai = 75
 
 # Apakah nilai lebih besar atau sama dengan 60?
-lulus = None           # ganti ini
+lulus = True         # ganti ini
 
 # Apakah nilai kurang dari 75?
-butuh_remedial = None  # ganti ini
+butuh_remedial = False  # ganti ini
 
 print("Lulus:", lulus)
 print("Perlu remedial:", butuh_remedial)

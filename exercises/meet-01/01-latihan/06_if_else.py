@@ -15,11 +15,11 @@ if ada_diskon:
 else:
     bayar = tiket
 
-print("Bayar:", bayar)   # tebak: ???
+print("Bayar:", bayar)   # tebak: Bayar 40000.0
 
 # Pertanyaan:
-# - Kenapa blok "else" tidak dijalankan?
-# - Coba ubah ada_diskon = False, kira-kira hasilnya apa?
+# - Kenapa blok "else" tidak dijalankan? KARENA KODE MEMBACA DARI ATAS KEBAWAH, KARENA ADA_DISKON LANGSUNG DIBACA DAN DAPAT DIHITUNG MAKAN PROGRAM AKAN SELESAI
+# - Coba ubah ada_diskon = False, kira-kira hasilnya apa? BERARTI HASIL TEBAKAN PRINT MENJADI "50000"
 
 
 # ============================================================
@@ -31,7 +31,7 @@ print("Bayar:", bayar)   # tebak: ???
 
 umur = 15
 
-if ???:                          # tulis kondisi yang benar di sini
+if umur >= 13:                          # tulis kondisi yang benar di sini
     print("Boleh masuk.")
 else:
     print("Maaf, belum boleh masuk.")
@@ -48,3 +48,12 @@ else:
 # - Kalau tidak, cetak "Masih oke."
 
 # Tulis kode kamu di sini:
+
+suhu = 33
+
+if suhu > 30:
+    print("Panas banget")
+else:
+    print("Masih oke")
+
+
