@@ -34,6 +34,11 @@ body {
      }
 */
 
+.menu {
+    display: flex;
+    gap: 16px;
+}
+
 
 /* ============================================================
    BAGIAN 2 — Chip hobi
@@ -49,6 +54,11 @@ body {
 /* TODO 2: Aktifkan flex pada .chip-container supaya chip berjejer,
    lalu tambahkan gap: 8px; antar chip.
 */
+
+.chip-container {
+    display: flex;
+    gap: 8px;
+}
 
 
 /* ============================================================
@@ -76,6 +86,12 @@ body {
          gap: 12px;
      }
 */
+
+.kartu-container {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
 
 
 /* TODO 4 (BONUS): Ubah flex-direction: .kartu-container jadi column,
